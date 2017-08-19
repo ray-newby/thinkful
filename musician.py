@@ -36,27 +36,30 @@ class Drummer(Musician):
         print("Like a stain, really.")
         print("It was more of a stain than a globule, actually.")
 
-class Band(Bassist, Guitarist, Drummer):
+class Band():
     def __init__(self):
-        self
+        # instantiate classes
+        self.derek = Bassist()
+        self.david = Guitarist()
+        self.mick = Drummer()
     
-    def hired(Musician):
+    def hired(self):
         member = str(input("Who do you want to hire: Bassist, Guitarist, or Drummer? "))
         if member == "Bassist":
-            print("Say hello to our new Bassist!")
+            print("Say hello to our new Bassist, Derek!")
         elif member == "Guitarist":
-            print("Say hello to our new Guitarist!")
+            print("Say hello to our new Guitarist, David!")
         elif member == "Drummer":
-            print("Just don't ask what happened to our last drummer.")
+            print("Hey Mick... just don't ask what happened to our last drummer.")
         else:
             print("I guess no one is being hired today.")
             
-    def fired(Musician):
+    def fired(self):
         member = str(input("Who do you want to fire: Bassist, Guitarist, or Drummer? "))
         if member == "Bassist":
-            print("Sorry, you may be our Bassist, but you'll have to go.")
+            print("Sorry, take a hike, Derek!")
         elif member == "Guitarist":
-            print("Sorry, you may be our Guitarist, but you'll have to go.")
+            print("Sorry, take a hike, David!")
         elif member == "Drummer":
             Drummer().combust()
         else:
@@ -67,3 +70,10 @@ class Band(Bassist, Guitarist, Drummer):
         Bassist().solo(6)
         Guitarist().solo(9)
         Drummer().solo(3)
+        
+if __name__ == "__main__":
+    spinaltap = Band()
+    spinaltap.play()
+    spinaltap.hired()
+    spinaltap.fired()
+
