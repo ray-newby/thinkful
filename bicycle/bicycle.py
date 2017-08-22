@@ -10,15 +10,6 @@ class Bicycle:
         self.name = name
         self.weight = weight
         self.cost = cost
-        
-    def model_name(self):
-        return self.name
-        
-    def bike_weight(self):
-        return self.weight
-        
-    def bike_cost(self):
-        return self.cost
 
     def setParameters(self, type):
         if type == "street racer":
@@ -51,12 +42,25 @@ class Bicycle:
             self.cost = 0
         return Bicycle(self.name, self.weight, self.cost)
 
+
 # Bike Shops Class:
     # Have a name
     # Have an inventory of different bicycles
     # Sell bicycles with a margin over their cost
     # Can see how much profit they have made from selling bikes
 
+class BikeShop:
+    def __init__(self, shop_name):
+        self.shop_name = shop_name
+        
+    # def inventory(self):
+        
+        
+    # def sell(self):
+        
+        
+    # def profit(self):
+        
 
 
 
@@ -71,9 +75,13 @@ def main():
     bike = Bicycle()
     bike.setParameters("street racer")
 
-    print(bike.model_name())
-    print(bike.bike_weight())
-    print(bike.bike_cost())
+    print(bike.name)
+    print(bike.weight)
+    print(bike.cost)
+
+    shop = BikeShop("Rough Ryders Bikes and More")
+    print(shop.shop_name)
+
 
 if __name__ == "__main__":
     main()
