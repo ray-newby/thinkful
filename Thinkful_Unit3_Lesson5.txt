@@ -1,0 +1,546 @@
+Thinkful
+
+Unit 3 / Lesson 5
+
+
+Testing Blogful
+
+ Estimated Time: 7-8 hours
+In this lesson, you'll learn the basics of unit testing a Flask application. You'll learn how to test your code in lots of different contexts, on a small, individual scale with unit tests, on a component-level scale with integration tests, and on an application-level scale with acceptance tests.
+
+You'll practice creating your own tests to verify the correctness of your code. Also, you'll learn how to use several important testing tools, including Splinter, Travis CI, and PhantomJS.
+
+Goals
+
+Understand unit tests, integration tests, and acceptance tests. Know when they are appropriate to use.
+Write useful tests in all three categories
+Use Splinter and PhantomJS to automate acceptance testing
+Incorporate TravisCI into your codebase to automate your testing
+
+
+----------------------------------
+
+Unit 3 / Lesson 5 / Assignment 1
+
+
+Introduction to Unit Testing
+
+ Estimated Time: 1-2 hours
+Before learning to test code, you should first understand a bit about code quality. As you continue your journey into programming, you're going to write a lot of code. At least one of your projects is going to grow into a big hairy mess of files and functions - it's inevitable. When you go to write a new function on top of this huge codebase, you'll want to make sure that adding new code doesn't break any old code. So how should you proceed? By writing test cases.
+
+Sometimes called "unit testing" or "test-driven development" (TDD), writing tests for your code is standard nowadays. The basic idea is this: every piece of new code must have a test associated with it, and every test must pass before pushing any code to the git repo.
+
+That is quite abstract and vague, so here's a simple example. Let's write a test for fizzbuzz, and then implement a fizzbuzz function that passes the test:
+
+def fizzbuzz_test(f):
+    if f(3) == "fizz" and f(5) == "buzz" and f(15) == "fizzbuzz":
+        print("Success!")
+    else:
+        print("Nope. Try again.")
+The function fizzbuzz_test() takes a function as an argument, runs it through a few tests, and then tells you if the function passed or not.
+
+Try the test function with the following fizzbuzz implementation:
+
+def fizzbuzz(n):
+    ret = ""
+    if not (n%3):
+        ret += "fizz"
+    if not (n%5):
+        ret += "buzz"
+    return ret or str(n)
+If you run the test, it passes successfully:
+
+>>> fizzbuzz_test(fizzbuzz)
+Success!
+However, you'll notice that you are only testing 3 points: f(3), f(5), and f(15). You could totally write a fizzbuzz implementation like this:
+
+def fizzjoke(n):
+    if n == 3:
+        return "fizz"
+    if n == 5:
+        return "buzz"
+    if n == 15:
+        return "fizzbuzz"
+...which still passes the test, but it doesn't actually implement fizzbuzz. A better fizzbuzz test would look like this:
+
+def fizzbuzz_goodtest(f):
+    output = []
+    for n in range(100):
+        output.append(str(f(n) + "\n"))
+
+    expected = open("fizzbuzz-output.txt", "r")
+    i = 0
+    for line in expected:
+        if line == output[i]:
+            print("Success!")
+            i += 1
+        else:
+            print("Nope. Try Again.")
+The file "fizzbuzz-output.txt" contains 100 lines of expected output. fizzbuzz_goodtest() simply compares this file to 100 executions of fizzbuzz. If it passes, it prints "Success!". Running fizzbuzz_goodtest(fizzbuzz) will print "Success!" to the terminal 100 times.
+
+This is all well and good, but when testing more complicated code, you will find yourself writing lots of boilerplate code. Naturally, as programmers, we seek to automate things, and so Python ships with a module called unittest that you can use to write more concise tests.
+
+The unittest module provides a standardized class for writing test cases, as well as functions for setting up and tearing down a test environment. For example, imagine you needed to test some database transactions. unittest would give you tools for automating setting up the database, populating it with test data, and tearing it down after the tests are complete.
+
+A simple invoice calculator
+
+Here is an example application that evenly divides a paycheck according to the number of hours worked for each employee. Your task will be to write a few test cases for this application using unittest. We'll guide you through the setup; first, save this in a new directory as invoice_calculator.py:
+
+def divide_pay(amount, staff_hours):
+    """
+    Divide an invoice evenly amongst staff depending on how many hours they
+    worked on a project
+    """
+    total_hours = 0
+    for person in staff_hours:
+        total_hours += staff_hours[person]
+
+    per_hour = amount / total_hours
+
+    staff_pay = {}
+    for person in staff_hours:
+        pay = staff_hours[person] * per_hour
+        staff_pay[person] = pay
+
+    return staff_pay
+
+def main():
+    staff_pay = divide_pay(360.0, {"Alice": 3.0, "Bob": 3.0, "Carol": 6.0})
+    for person, pay in staff_pay.items():
+        print("{} should be paid ${:.2f}".format(person, pay))
+
+if __name__ == "__main__":
+    main()
+Creating the test class
+
+To get started, create a new file called test_invoice_calculator.py. In that file, add a stub for your test class:
+
+import unittest
+
+class InvoiceCalculatorTests(unittest.TestCase):
+    pass
+
+if __name__ == "__main__":
+    unittest.main()
+Here you import the unittest module, and create a new subclass of unittest.TestCase called InvoiceCalculatorTests. In your main block you call the unittest.main function, which will collect and run any tests contained in the file.
+
+Save the file, then run it with python3 test_invoice_calculator.py. You should see the following output:
+
+---
+Ran 0 tests in 0.000s
+
+OK
+This tells you that you didn't run any tests (which is unsurprising, since you haven't written any yet), and that there were no test failures.
+
+A simple first test
+
+Now it's your turn. Write a test for a case in which Alice and Bob work for 3 hours, and Carol works for 6 hours on a $360 project. When complete, running the test using python3 test_invoice_calculator.py should pass successfully. You'll probably use the following functions:
+
+assertEqual from the unittest module - see docs here
+divide_pay from invoice_calculator.py
+Hints and tips
+Hint: You are going to call the divide_pay function with the above as input, and make sure that the pay is calculated correctly.
+
+Bigger hint: The first change you have to make is to import the divide_pay function from the invoice_calculator.py file. Next, create a new test, called test_divided_fairly. In this method you need to call the divide_pay function for the above scenario. Then use the assertEqual method of the TestCase class to check that the value returned matches our expectations for what each person should be paid.
+
+Testing the edge cases
+
+At this point your test passes, so you know that your code works right? Well, not quite. Generally once you have tests for the basic operation of some code, you'll then want to identify any edge cases to make sure that they work properly too. Edge cases are places where there is something slightly unusual about the input which could affect the output. These are among the most common places to find bugs in code, and so are great things to test.
+
+Try to add tests for some edge cases to see whether you can make your code more robust. First of all, add a test to make sure that if you enter zero hours for a person then it is handled correctly:
+
+def test_zero_hour_person(self):
+    pay = divide_pay(360.0, {"Alice": 3.0, "Bob": 6.0, "Carol": 0.0})
+    self.assertEqual(pay, {"Alice": 120.0, "Bob": 240.0, "Carol": 0.0})
+Try running the test. You should see that our code handles this case well already. Now how about if none of the staff have entered any hours? Presumably at this point you should throw an appropriate error to say that there is an incorrect input. Try to write a test for that:
+
+def test_zero_hours_total(self):
+    with self.assertRaises(ValueError):
+        pay = divide_pay(360.0, {"Alice": 0.0, "Bob": 0.0, "Carol": 0.0})
+Here you construct your assertion in a slightly different way than before. Because you are expecting an error in the code, you have to catch the exception. In order to do this you can use a with block to assert that a ValueError is raised when you don't enter any hours.
+
+Try running the tests. Your new test should fail, telling us that a ZeroDivisionError took place when you try to work out the per_hour amount. So let's make a slight change to invoice_calculator.py to make sure that the more appropriate ValueError is thrown when you have no hours entered:
+
+def divide_pay(amount, staff_hours):
+    """
+    Divide an invoice evenly amongst staff depending on how many hours they
+    worked on a project
+    """
+    total_hours = 0
+    for person in staff_hours:
+        total_hours += staff_hours[person]
+
+    if total_hours == 0:
+        raise ValueError("No hours entered")
+
+    per_hour = amount / total_hours
+
+    staff_pay = {}
+    for person in staff_hours:
+        pay = staff_hours[person] * per_hour
+        staff_pay[person] = pay
+
+    return staff_pay
+Notice how you've added the check to make sure that the total_hours variable isn't equal to zero. Now try running the tests again. They should all pass.
+
+Let's continue with one more edge case. What happens if you pass an empty dictionary for the staff_hours variable? Hopefully this will be handled by the ValueError code you've just added, so add a test to make sure that this also works how you expect:
+
+def test_no_people(self):
+    with self.assertRaises(ValueError):
+        pay = divide_pay(360.0, {})
+Try running your tests. Hopefully they should all still pass, with your ValueError exception catching both scenarios where no hours are entered.
+
+Is this everything?
+
+In this assignment you've seen how to test the main functionality of some code, and added a series of further tests making sure that the edge cases are covered.
+
+Have a think about whether you've covered all of the edge cases that could arise. Can you think of any more tests which you could add to help make your code more robust? Remember that as a developer you will have to both write and maintain your tests, so you will need to strike a balance over the number of tests you have for each unit of code. Be sure to discuss this with your mentor, and add any further tests that you decide are appropriate.
+
+Why is unit testing your software a good idea?
+
+Describe main elements of a test class.
+
+Which function is used to run unit tests?
+
+What is an assertion, and why do we use them in test cases?
+
+How does the unittest module distinguish between test and non-test methods?
+
+Can you give of an example of the type of code which would belong in a setUp or tearDown method?
+
+
+
+----------------------------------
+
+Unit 3 / Lesson 5 / Assignment 2
+
+
+Testing web applications
+
+ Estimated Time: 2-3 hours
+In this lesson you are going to look at different ways to test web applications. For the first assignment you'll look at three different approaches to testing, using the blog from earlier on as a starting point.
+
+Unit testing
+
+So far in the course you have primarily looked at unit testing. In unit testing you make sure that small, self-contained sections of code work in isolation. You should be pretty familiar with how this works, but just as a quick refresher, set up a unit test to make sure that the dateformat filter you added is working correctly.
+
+This function is a good candidate for unit testing as it is small and doesn't rely on a other services (for example a running server, or a database). So let's write a couple of simple unit tests to make sure it is working correctly. To get started cd into your blog project directory and activate the virtualenv. Then create a new folder called tests which will hold the tests.
+
+Next you can create a subclass of unittest.TestCase to hold the tests. In tests/test_filter.py add the following code:
+
+import os
+import unittest
+import datetime
+
+# Configure your app to use the testing configuration
+if not "CONFIG_PATH" in os.environ:
+    os.environ["CONFIG_PATH"] = "blog.config.TestingConfig"
+
+import blog
+from blog.filters import *
+
+class FilterTests(unittest.TestCase):
+    pass
+
+if __name__ == "__main__":
+    unittest.main()
+The body of the code creates the FilterTests class to hold your tests, and then runs the tests in the main block. The one new idea here is that you set the CONFIG_PATH environment variable to point to a TestingConfig class. You might remember how in the __init__.py file you configured the Flask app based upon the value held in this environment variable. So next you need to create the TestingConfig class in the config.py file:
+
+class TestingConfig(object):
+    SQLALCHEMY_DATABASE_URI = "postgresql://ubuntu:thinkful@localhost:5432/blogful-test"
+    DEBUG = False
+    SECRET_KEY = "Not secret"
+Here you have a separate database URI for testing, and you use a different secret key. You also turn off the debug setting. This means that you will be testing exactly what your clients will see in production without the additional debugging information (which isn't helpful within a testing environment). Go ahead and create the new test database by running createdb blogful-test. (Don't forget that connection errors on port 5432 can usually be solved with sudo service postgresql start.)
+
+Now, add a couple of tests to make sure that the dateformat function is working correctly:
+
+class FilterTests(unittest.TestCase):
+    def test_date_format(self):
+        # Tonight we're gonna party...
+        date = datetime.date(1999, 12, 31)
+        formatted = dateformat(date, "%y/%m/%d")
+        self.assertEqual(formatted, "99/12/31")
+
+    def test_date_format_none(self):
+        formatted = dateformat(None, "%y/%m/%d")
+        self.assertEqual(formatted, None)
+The first test creates a datetime.date object, runs it through the dateformat function and makes sure that the resulting string is correct. The second test passes None into the function, and makes sure that you get a None object back in return.
+
+Try running your tests using PYTHONPATH=. python tests/test_filters.py. You should see that the tests pass fine. Notice how when you run your tests you have to set the PYTHONPATH environment variable. This is so the tests can import the blog module correctly, even though it is in a different location to the test files.
+
+Integration testing
+
+The next type of testing is integration testing. For this you are going to look at how to test the add_entry_post view. Now your view is definitely pretty small – it's around 10 lines of code with a generous allocation of whitespace. So why are you writing an integration test rather than a unit test?
+
+The code is relying on a few relatively large subsystems and services. It touches the ORM, which works with the database, and it also works hand-in-hand with the login system. If you were going to write a unit test in the strict definition of the term you would need to eliminate your dependency on these subsystems.
+
+Generally you'll do this by mocking, creating simple code which mimics the functionality of the subsystems. But in this case mocking the database and login system seems like a lot of work for little tangible reward; your tests may run slightly faster but you will have another 100 lines of code to maintain.
+
+The solution is to create integration tests. These are tests that make sure the various subsystems are working together correctly. In practical terms you will find little difference between writing integration tests and unit tests; you just have to do a little more work to set up your testing environment.
+
+So let's get started writing an integration test for the add_entry_post view. In tests/test_views_integration.py add the following class:
+
+import os
+import unittest
+from urllib.parse import urlparse
+
+from werkzeug.security import generate_password_hash
+
+# Configure your app to use the testing database
+os.environ["CONFIG_PATH"] = "blog.config.TestingConfig"
+
+from blog import app
+from blog.database import Base, engine, session, User, Entry
+
+class TestViews(unittest.TestCase):
+    def setUp(self):
+        """ Test setup """
+        self.client = app.test_client()
+
+        # Set up the tables in the database
+        Base.metadata.create_all(engine)
+
+        # Create an example user
+        self.user = User(name="Alice", email="alice@example.com",
+                         password=generate_password_hash("test"))
+        session.add(self.user)
+        session.commit()
+
+    def tearDown(self):
+        """ Test teardown """
+        session.close()
+        # Remove the tables and their data from the database
+        Base.metadata.drop_all(engine)
+
+if __name__ == "__main__":
+    unittest.main()
+Here you use the environment variable trick to use the testing configuration. You then create a test client using the app.test_client function. This will allow you to make requests to views and inspect the responses you get from the app. Next you call the Base.metadata.create_all function to create tables in the test database. Finally you create an example user and add it to the database. You'll use the user to log in and be the author of the test entry.
+
+Now, in the TestViews class, add a method to simulate logging in, and a test which attempts to add an entry.
+
+    def simulate_login(self):
+        with self.client.session_transaction() as http_session:
+            http_session["user_id"] = str(self.user.id)
+            http_session["_fresh"] = True
+
+    def test_add_entry(self):
+        self.simulate_login()
+
+        response = self.client.post("/entry/add", data={
+            "title": "Test Entry",
+            "content": "Test content"
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(urlparse(response.location).path, "/")
+        entries = session.query(Entry).all()
+        self.assertEqual(len(entries), 1)
+
+        entry = entries[0]
+        self.assertEqual(entry.title, "Test Entry")
+        self.assertEqual(entry.content, "Test content")
+        self.assertEqual(entry.author, self.user)
+The simulate_login method essentially mimics what Flask-Login looks for when determining whether a user is logged in. You use the self.client.session_transaction method to get access to a variable representing the HTTP session. You then add two variables to this session: the id of the user and a variable which tells Flask-Login that the session is still active (_fresh).
+
+In the test_add_entry method you call your simulate_login method so you can act as a logged in user. Then you send a POST request to /entry/add using the self.client.post method. You use the data parameter to provide the form data for an example entry.
+
+Next you start to check that the response from the app looks correct. Make sure that your user is being redirected to the / route by checking the status code and location header of the response.
+
+Then check to make sure that the entry has been added to the database correctly. Look to see that only one entry has been added, and make sure that the title, content and author are set to the correct values.
+
+Try running the test using PYTHONPATH=. python tests/test_views_integration.py. You should see that the entry is correctly added to the database.
+
+Acceptance testing
+
+The final type of testing is acceptance testing. Unit and integration tests tend to be very developer-centric in their view of the world. They are designed to make sure that the code you write does what it says it does. Acceptance testing is a different slant on how to test software. Acceptance tests are designed to make sure that your code does what your users expect it to do. You'll automate patterns of user behavior and make sure that you get the correct outcome.
+
+To demonstrate this you are going to test your login system. You'll make sure that when a user visits the /login page and enters a username and password then they are logged in if they enter correct values, or asked to try again if they enter incorrect values.
+
+To help carry out the acceptance testing you are going to use a couple of new tools. Splinter is a user-friendly Python layer on top of the Selenium browser automation tool. Selenium allows us to automatically control an instance of a browser – visiting sites, clicking on links and adding content as if you were a real user.
+
+First things first, you'll need to install Splinter using pip, and then update your project's dependencies. Run echo splinter >>requirements.txt followed by pip install -r requirements.txt.
+
+You also need to install a browser which Selenium can control. Because the tests will be running on the Cloud9 server with no screen attached you cannot use a traditional browser like Chrome, or Firefox. Fortunately there is a project called Phantom JS, which is a headless version of the WebKit engine which powers Safari and Chrome. To install this on Cloud9, run sudo npm install -g phantomjs.
+
+To see how it works let's set up a class for your tests in tests/test_views_acceptance.py:
+
+import os
+import unittest
+import multiprocessing
+import time
+from urllib.parse import urlparse
+
+from werkzeug.security import generate_password_hash
+from splinter import Browser
+
+# Configure your app to use the testing database
+os.environ["CONFIG_PATH"] = "blog.config.TestingConfig"
+
+from blog import app
+from blog.database import Base, engine, session, User
+
+class TestViews(unittest.TestCase):
+    def setUp(self):
+        """ Test setup """
+        self.browser = Browser("phantomjs")
+
+        # Set up the tables in the database
+        Base.metadata.create_all(engine)
+
+        # Create an example user
+        self.user = User(name="Alice", email="alice@example.com",
+                         password=generate_password_hash("test"))
+        session.add(self.user)
+        session.commit()
+
+        self.process = multiprocessing.Process(target=app.run,
+                                               kwargs={"port": 8080})
+        self.process.start()
+        time.sleep(1)
+
+
+    def tearDown(self):
+        """ Test teardown """
+        # Remove the tables and their data from the database
+        self.process.terminate()
+        session.close()
+        engine.dispose()
+        Base.metadata.drop_all(engine)
+        self.browser.quit()
+
+if __name__ == "__main__":
+    unittest.main()
+Quite a bit of this is the same as your class in tests/test_views_integration.py. There are a couple of key differences though. Firstly rather than creating a test_client instance you create an instance of the splinter.Browser class, telling it to use the PhantomJS driver. This is what you will use for your browser automation.
+
+The second key difference is that you use the multiprocessing module in order to start the Flask test server running. Because the test will be visiting the actual site you need a server up to run your app.
+
+Up until now, you've always run your app from the command line. Now, you're essentially doing the same thing, but from your python script. The multiprocessing module gives you the ability to start and run other code simultaneously with your own scripts. It also allows you to communicate and control this code, by calling methods such as start and terminate.
+
+multiprocessing is a powerful python module – it provides features for implementing concurrency in your applications – which is a complicated topic all by itself. However, you don't have to understand all the underlying concepts behind concurrency in order to use multiprocessing. If you can understand how to create a Process object and control it using its start and terminate methods, that's all the knowledge you need for now.
+
+In your test, you can't just call the app.run method as usual, because this method is blocking, and will stop the tests from running after it has started. So instead you launch the app.run function in a separate process.
+
+In order to make this happen you create an instance of multiprocessing.Process. The target tells it which function to run; in this case your app.run method. You then start the process using its start method. Then you need to wait a little for the server to start, so you use time.sleep(1) in order to pause for a second.
+
+In the teardown method you kill the server using the Process.terminate method, and make the browser exit using the Browser.quit method.
+
+Now you can add a couple of tests to your class which use the browser object to check that the login system works.
+
+    def test_login_correct(self):
+        self.browser.visit("http://127.0.0.1:8080/login")
+        self.browser.fill("email", "alice@example.com")
+        self.browser.fill("password", "test")
+        button = self.browser.find_by_css("button[type=submit]")
+        button.click()
+        self.assertEqual(self.browser.url, "http://127.0.0.1:8080/")
+
+    def test_login_incorrect(self):
+        self.browser.visit("http://127.0.0.1:8080/login")
+        self.browser.fill("email", "bob@example.com")
+        self.browser.fill("password", "test")
+        button = self.browser.find_by_css("button[type=submit]")
+        button.click()
+        self.assertEqual(self.browser.url, "http://127.0.0.1:8080/login")
+The tests are both very similar, they just use different data for a correct and incorrect login. First you visit the login page using the Browser.visit method. You then fill in the form fields using the Browser.fill method. This looks for an <input> element within the HTML which has a name attribute matching the first argument. In this case you are looking for the email and password fields. It then fills these in with the information given in the second argument.
+
+Next you find the submit button on the page using the Browser.find_by_css method. This uses css selector rules to find an item on the page. In this case you look for a <button> element which has the type attribute set to "submit". Next you use the click method to submit the form. Finally you check to make sure that you have been relocated to the correct location: the front page if you have logged in successfully, or back to the login page if the information you gave was incorrect.
+
+Try running these tests using PYTHONPATH=. python tests/test_views_acceptance.py. In the background Selenium will run through the actions which you have specified as if they were being performed on a regular browser, by an end user. You will then be given the results of the tests.
+
+Notice how (whilst being much more interesting to watch) these tests take significantly longer to run than the unit and integration tests. You have something of a trade-off:
+
+Unit tests run very quickly but only give you information about isolated sections of your code
+Integration tests run a little less quickly, and give you information about how different elements are working together
+Acceptance tests run slower still, but give you information that your whole system is working correctly
+In larger projects you will need to carefully manage the balance between the different types of tests, choosing the appropriate style of testing for the problem you are tackling. In practice you often need to use a combination of the three styles in order to have well tested and maintainable code.
+
+What is the difference between unit testing, integration testing and acceptance testing?
+Unit testing tests small, self-contained units of code which have no dependencies on other subsystems. Integration testing checks that a series of subsystems are working together correctly in your code. Acceptance testing approaches code from a user's perspective, performing actions and checking that the results are correct.
+How do we create a client for making requests to Flask views, and use it to make a get request?
+The app.test_client() method creates a client. You can then make a get request by using the client.get(url) method.
+How do you simulate the submission of form data using the Flask test client?
+You send a dictionary containing the form data as the data parameter of a request.
+What does the session_transaction method of a test client do?
+It gives you access to the HTTP session variable, allowing you to add and remove items from the session.
+How would you fill in a form field using Splinter?
+Browser.fill(field_name, value), where field_name is taken from the name attribute of the element, and value is the value to set the item to.
+
+
+----------------------------------
+
+Unit 3 / Lesson 5 / Assignment 3
+
+
+Extending the blog test suite
+
+ Estimated Time: 2-3 hours
+In this assignment you are going to use what you learned in the previous two assignments to implement further tests for the blog application. Again this assignment isn't going to be prescriptive about which tests you should write; you should try to use everything you have learned about testing so far to produce an application which has a suitable level of test coverage.
+
+To help you get started try to draw up a list of which features and parts of the codebase you think need testing. Then think about which style of testing would be most appropriate to check that each element of your code is working correctly. You can discuss this with your mentor if you are struggling with where to start.
+
+When you have your list of tests finalized then try to implement them one-by-one, slowly building up a test suite for the blog. As always make sure to discuss your finished code with your mentor, and push your code up to GitHub on a regular basis.
+
+
+----------------------------------
+
+Unit 3 / Lesson 5 / Assignment 4
+
+
+Continuous integration using Travis CI
+
+ Estimated Time: 1 hour
+In this assignment you will use continuous integration (CI) to automatically run your test suite every time you push changes to our GitHub respository. CI is a practice which allows us to automatically build, test, and deploy software every time we make a change to our codebase. This helps to reduce the amount of time you spend on routine development tasks. It also helps ensure that you follow good development practice such as running tests regularly, and deploying code early and often.
+
+You are going to be using a service called Travis CI which allows you to provision a server and run some code every time you push to GitHub. Travis is widely used for open-source projects, and is free to use for public GitHub repositories.
+
+So let's see how it works. First of all make sure that the latest version of your blog code is pushed up to GitHub. Then sign in to Travis from the front page of their website. This will prompt you to give Travis permission to access your GitHub account.
+
+Now that you're signed up you need to activate Travis for your repository. Go to your profile page by clicking on your name in the top-right corner, and then flip the switch next to your blog repository to activate Travis.
+
+With Travis up and running you should create a configuration with settings to connect to Travis' Postgres database. Add the following configuration to config.py:
+
+class TravisConfig(object):
+    SQLALCHEMY_DATABASE_URI = "postgresql://localhost:5432/blogful-test"
+    DEBUG = False
+    SECRET_KEY = "Not secret"
+Then you need to tell Travis what to do when you push your code. In the root directory of your blog create a file called .travis.yml (notice the initial dot character, indicating that this is a hidden file). Then add the following markup to the file:
+
+language: python
+python:
+    - "3.4"
+install: python3 -m pip install -r requirements.txt
+env:
+    - CONFIG_PATH=blog.config.TravisConfig
+before_script:
+    - psql -c 'create database "blogful-test";' -U postgres
+script:
+    - PYTHONPATH=. python3 tests/test_filters.py
+    - PYTHONPATH=. python3 tests/test_views_integration.py
+    - PYTHONPATH=. python3 tests/test_views_acceptance.py
+    # Add any other tests here
+Here you tell Travis that you are looking to test a Python program. You then specify the versions of Python to test against. Next you instruct Travis to install your dependencies from the same requirements.txt that you use for your own installation. You tell Travis to use your new configuration. Then you tell Travis to set up a new Postgres database before the tests are run. Finally you describe the steps required to run each of your tests.
+
+To test it out add and commit your changes to GitHub, then push them up to Travis. If you then go back to the front page of Travis you should see that your repository is now in a queue waiting to be run. If you give it a few seconds (sometimes longer when Travis is busy) then you will be able to see the output of your commands as they are run on the server. When it has finished running your tests you will get an email either telling you that your tests have either passed or failed. If they have failed then try to fix any errors, and push your code back up to GitHub to make Travis run again.
+
+And that's all there is to using Travis and CI. In time you will find that your .travis.yml files will become more complex, encompassing more than just running your tests. But that is the joys of continuous integration – pretty much any job which needs to be run regularly on your codebase can be added to your .travis.yml file and you will be notified about how it has gone.
+
+What advantages to CI bring to a development process?
+It allows you to automate any tasks which need running any time the codebase changes. This helps embed good practice such as regular testing, and reduces the time spent carrying out repeated tasks.
+How do you make Travis install your project dependencies?
+You create a requirements.txt file which contains a list of your dependencies, then in .travis.yml you create an installation rule as follows: install: pip install -r requirements.txt.
+How do you tell Travis which commands to run?
+The commands are supplied in the script element of the .travis.yml file. This can either be a single command, or a list of commands defined on subsequent lines each starting with a hyphen character.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

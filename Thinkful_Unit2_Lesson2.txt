@@ -1,0 +1,358 @@
+Thinkful
+
+Unit 2 / Lesson 2
+
+
+Model an Auction Site Using SQLAlchemy
+
+ Estimated Time: 9-10 hours
+In the previous lesson you learned how to communicate with a PostgreSQL database by writing SQL statements, at first using the command line, and later on from inside Python itself. As you were working on the snippets app you probably noticed that it felt like you were writing in two different languages, switching between Python syntax and SQL syntax.
+
+In this lesson you will learn SQLAlchemy, a module which is designed to bridge the gap between Python and SQL. You'll write Python classes and create instances of those classes. In the background SQLAlchemy will be transforming these actions into the SQL statements which you learned in the previous lesson, and using them to build a database.
+
+Along the way you will be building the database layer for the world's second most popular auction site, TBay. You will create users, have them put items up for auction, and place bids to try to win the items which are up for sale.
+
+Goals
+
+Use SQLAlchemy to create tables and rows
+Query a database using SQLALchemy
+Create relationships between models
+
+----------------------------------
+
+Unit 2 / Lesson 2 / Assignment 1
+
+
+Creating the Models
+
+ Estimated Time: 2-3 hours
+In this lesson you will be starting to create the models which represent the different elements of TBay - users, items and bids. SQLAlchemy models are used to create tables in the database. They describe the structure and layout of the data which will be held in the tables. Instances of the model then represent rows of data in the database.
+
+Engines, Bases and Sessions
+
+To get started, create a new project in a directory called tbay, and cd into the directory. Then initialize and activate a virtual environment:
+
+sudo apt-get update
+sudo apt-get install python3.4-venv
+python3 -m venv env
+source env/bin/activate
+Next, install SQLAlchemy and psycopg2 using pip install sqlalchemy psycopg2. Then create a new Postgres database for the project by running: createdb tbay.
+
+Now you can get started on the Python code. Create a new file called tbay.py and add the following code:
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+
+engine = create_engine('postgresql://ubuntu:thinkful@localhost:5432/tbay')
+Session = sessionmaker(bind=engine)
+session = Session()
+Base = declarative_base()
+Here three key components of SQLAlchemy are introduced. First the engine is created. This will talk directly to your database using the raw SQL commands.
+
+Take a look at the long connection string passed to create_engine. Let's break this down:
+
+postgresql:// - Connect to a Postgres database
+ubuntu:thinkful - Connect as the user ubuntu, with the password thinkful. ubuntu is the name of the user we set up in Cloud9.
+@localhost - Connect to a database running on the same machine as the code
+:5432 - Connect to a database listening on port 5432 (the default Postgres port)
+/tbay - Connect to the database called tbay
+Next the session is created. This is the equivalent to a psycopg2 cursor - it allows you to queue up and execute database transactions. Multiple sessions can take place on a single database simultaneously.
+
+Finally a declarative base is created. This acts like a repository for the models, and will issue the create table statements to build up the database's table structure.
+
+Your first model
+
+Now that you have everything set up to talk to a database it's time to create a model. The first model you will create is the Item model. Add the following code to tbay.py:
+
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, DateTime
+
+class Item(Base):
+    __tablename__ = "items"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String)
+    start_time = Column(DateTime, default=datetime.utcnow)
+The Item model is represented by a class called Item. Subclassing Base registers the Item model with the declarative base, so when you later ask for the tables to be created, the Item table will be included. Inside the class there is a string __tablename__, which will be used to name the items table in the database.
+
+Then there are objects which represent the four columns that the table should contain. Firstly there is the id column. This is an integer primary key, which will be used to uniquely identify each item. Next there is the name of the item, a string which has the not null constraint applied to it. Then there is the description of the item, also a string. Finally there is the auction start time, which contains a DateTime object. This has a value which defaults to the current UTC time.
+
+To actually create the table there has to be a create table command issued. This will be issued by the declarative base. Add the following line to the bottom of tbay.py:
+
+Base.metadata.create_all(engine)
+This creates a new table for each subclass of Base, ignoring any tables which already exist in the database.
+
+Run your script using python tbay.py. Then make sure that the items table was created successfully by running psql -d tbay, and entering \d+ items. You should see the four columns that your table contains printed out. Then exit the Postgres interpreter by entering \q.
+
+Challenge: Create the user and bid models
+
+Try to create the two further models which you will use for the auction site.
+
+The user model should contain three columns:
+
+An integer id, which is the primary key
+A username string, which cannot be null
+A password string, which cannot be null
+The bid model should contain two columns:
+
+An integer id, which is the primary key
+A floating-point price, which cannot be null
+
+----------------------------------
+
+Unit 2 / Lesson 2 / Assignment 2
+
+
+Creating and Querying Data
+
+ Estimated Time: 2-3 hours
+In the last assignment you set up the models (and the equivalent tables) to allow you to store users, items and bids for your auction site. In this assignment you'll use these models to create, retrieve, update and delete rows from your database.
+
+Creating rows
+
+To create a row you need to create an instance of the model. You can set the values of the columns by setting properties of the model, in the same way as you would with any other class. For example, to create a user you could use the following code:
+
+beyonce = User()
+beyonce.username = "bknowles"
+beyonce.password = "uhohuhohuhohohnana"
+session.add(beyonce)
+session.commit()
+First an instance of the User class is created, and the username and password are set. Note that SQLAlchemy creates a default __init__ method for models, so you could also say: beyonce = User(username="bknowles", password="uhohuhohuhohohnana"). Then the beyonce object is added to the session. This queues up the instruction to create the row in the database, ready to be executed. Finally you commit the session, which will actually run the SQL command and create the row.
+
+Try it!
+Open up a Python interpreter in the same directory as your tbay.py script, and import the session and your models using: from tbay import User, Item, Bid, session. Create two users, and two items, and commit them to the database.
+
+Querying for rows
+
+To query for rows you can use the session.query method. This provides a flexible way to perform the queries which you have written in SQL up to this point. The following example covers the most common usages of the query interface:
+
+# Returns a list of all of the user objects
+# Note that user objects won't display very prettily by default -
+# you'll see their type (User) and their internal identifiers.
+session.query(User).all() # Returns a list of all of the user objects
+
+# Returns the first user
+session.query(User).first()
+
+# Finds the user with the primary key equal to 1
+session.query(User).get(1)
+
+# Returns a list of all of the usernames in ascending order
+session.query(User.username).order_by(User.username).all()
+
+# Returns the description of all of the basesballs
+session.query(Item.description).filter(Item.name == "baseball").all()
+
+# Return the item id and description for all baseballs which were created in the past.  Remember to import the datetime object: from datetime import datetime
+session.query(Item.id, Item.description).filter(Item.name == "baseball", Item.start_time < datetime.utcnow()).all()
+Try it!
+Try to make up four different queries, which will find each of your two users and two items. Try using a different filtering technique for each query. Experiment with returning different parts of the model in your queries.
+
+Updating rows
+
+Updating rows using SQLAlchemy is fairly straightforward. You simply need to query for a row, and then change an attribute of the returned object. For example:
+
+user = session.query(User).first()
+user.username = "solange"
+session.commit()
+First you query for the first user, change their username, and commit the changes to store the new username.
+
+Try It!
+Change the names and descriptions of your two items.
+
+Deleting rows
+
+To delete a row you need to use the session.delete function. For example:
+
+user = session.query(User).first()
+session.delete(user)
+session.commit()
+Again, you query for the first user, then call session.delete to queue up the delete command. This will execute when session.commit is called.
+
+Try It!
+Delete all of the the items and users from your database. In the next assignment you'll rebuild the database from scratch, and add in relationships between the different parts of the system.
+
+----------------------------------
+
+Unit 2 / Lesson 2 / Assignment 3
+
+
+Adding Relationships
+
+ Estimated Time: 5-6 hours
+In the previous two assignments you created and worked with SQLAlchemy models for users, items, and bids for an auction site. But there is still an important component missing from the database: the relationships between the different parts of the system. For example, you don't know who owns each item, or to whom the bids belong. In this assignment you will be seeing how to create three different types of relationships between SQLAlchemy models.
+
+Relationship types
+
+Before looking at the code to create the relationships you need to understand what the three types of relationships are.
+
+One-to-One
+A one-to-one relationship links a single row of one table to a single row of another. For example, imagine you have a table which holds people, and a table which holds passport information. Each person is only associated with one piece of passport information. And each piece of passport information is only associated with one person. This is an example of a one-to-one relationship.
+
+One-to-Many
+A one-to-many relationship links a single row of one table to multiple rows of another. For example, think about a guitar and its manufacturer. Each guitar will only have one manufacturer. But a manufacturer will have created multiple guitars. So manufacturers have a one-to-many relationship to guitars. Or conversely guitars have a many-to-one relationship to manufacturers.
+
+Many-to-Many
+A many-to-many relationship links multiple rows of one table to multiple rows of another table. For example think about a pizza and its toppings. A pizza can have multiple toppings. And a single topping can be on multiple pizzas. This is an example of a many-to-many relationship.
+
+Try It!
+Try classifying the following relationships as either one-to-one, one-to-many, or many-to-many:
+
+Thinkful mentors and their students
+People and their spouses
+Films and the critics who have reviewed them
+TBay items and the users selling the item
+TBay items and the users who have bid on them
+TBay items and the bids placed on them
+Creating the relationships
+
+Now that you understand the differences between the types of relationship its time to see how to create the relationships between the tables using SQLAlchemy. Note that in order to run the examples in this section you will need to have a SQLAlchemy engine, session, and declarative base already initialized.
+
+One-to-One
+Take a look at the following example of how to create a one-to-one relationship between a person and their passport information:
+
+from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy.orm import relationship
+
+class Person(Base):
+    __tablename__ = 'person'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+
+    passport = relationship("Passport", uselist=False, backref="owner")
+
+class Passport(Base):
+    __tablename__ = 'passport'
+    id = Column(Integer, primary_key=True)
+    issue_date = Column(Date, nullable=False, default=datetime.utcnow)
+
+    owner_id = Column(Integer, ForeignKey('person.id'), nullable=False)
+
+beyonce = Person(name="Beyonce Knowles")
+passport = Passport()
+beyonce.passport = passport
+
+session.add(beyonce)
+session.commit()
+
+print(beyonce.passport.issue_date)
+print(passport.owner.name)
+Here you create two models, one for a person, and one for their passport information. The person has a name field, and the passport information contains an issue date.
+
+Now look at the relationship. This is defined in two parts. In the Passport model there is an integer field called owner_id which will hold the id of a person. To ensure that the id refers to an existing row in the person table, the field has a ForeignKey constraint. The foreign key constraint specifies that a matching value must exist in a specified column of a different table. In this case the owner ID must be a value which exists in 'person.id'; the id column of the person table.
+
+The second part of the relationship is the passport field in the Person model. The most important part of the code is this: passport = relationship("Passport"). This says that there is a relationship between the Person model and the Passport model. SQLAlchemy is able to automatically work out that the two models are connected via the foreign key field in the Passport model.
+
+With this relationship in place you can treat the passport field as if it were a regular part of the Person model. Notice how in the example you can access the passport like any other field through beyonce.passport.
+
+The other two arguments passed to the relationship function also have a role to play. The uselist=False argument says that the passport should be treated as a single object rather than a list of objects. This is what guarantees that this is a one-to-one relationship - each person only has one set of passport information.
+
+The backref="owner" says that as well as being able to access the passport information from the person through person.passport, you can also do the inverse and access the person through the passport object through passport.owner. This isn't strictly necessary, although it is pretty convenient.
+
+One-to-Many
+A one-to-many relationship is constructed in the same way as a one-to-one relationship except that the uselist=False argument is omitted. For example, here's a one-to-many relationship between manufacturer and the guitars they produce:
+
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+
+class Manufacturer(Base):
+    __tablename__ = 'manufacturer'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    guitars = relationship("Guitar", backref="manufacturer")
+
+class Guitar(Base):
+    __tablename__ = 'guitar'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+
+    manufacturer_id = Column(Integer, ForeignKey('manufacturer.id'),
+                             nullable=False)
+
+fender = Manufacturer(name="Fender")
+strat = Guitar(name="Stratocaster", manufacturer=fender)
+tele = Guitar(name="Telecaster")
+fender.guitars.append(tele)
+
+session.add_all([fender, strat, tele])
+session.commit()
+
+for guitar in fender.guitars:
+    print(guitar.name)
+print(tele.manufacturer.name)
+Once again a foreign key relationship is set up between the Guitar and Manufacturer models. And again you set up a relationship with a backref, this time leaving out the uselist=False argument. This indicates that each manufacturer can build multiple guitars, and so the guitars field should be treated as a list.
+
+With the models set up, you can then see how this works in practice. For the Stratocaster we use the backref to set the manufacturer field of the guitar. In contrast for the Telecaster we append the guitar to the fender.guitars list. Both of these methods have the same result - notice how the Stratocaster has been automatically appended to fender.guitars, and the Telecaster has had the tele.manufacturer field filled in automatically.
+
+Many-to-Many
+A many-to-many relationship works like two one-to-many relationships to an intermediate table. The table will hold foreign keys to columns on both sides of the relationship. For example, here's a many-to-many relationship between pizzas and toppings:
+
+from sqlalchemy import Table, Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+
+pizza_topping_table = Table('pizza_topping_association', Base.metadata,
+    Column('pizza_id', Integer, ForeignKey('pizza.id')),
+    Column('topping_id', Integer, ForeignKey('topping.id'))
+)
+
+class Pizza(Base):
+    __tablename__ = 'pizza'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    toppings = relationship("Topping", secondary="pizza_topping_association",
+                            backref="pizzas")
+
+class Topping(Base):
+    __tablename__ = 'topping'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+
+peppers = Topping(name="Peppers")
+garlic = Topping(name="Garlic")
+chilli = Topping(name="Chilli")
+
+spicy_pepper = Pizza(name="Spicy Pepper")
+spicy_pepper.toppings = [peppers, chilli]
+
+vampire_weekend = Pizza(name="Vampire Weekend")
+vampire_weekend.toppings = [garlic, chilli]
+
+
+session.add_all([garlic, peppers, chilli, spicy_pepper, vampire_weekend])
+session.commit()
+
+for topping in vampire_weekend.toppings:
+    print(topping.name)
+
+for pizza in chilli.pizzas:
+    print(pizza.name)
+First an association table is created to hold the foreign keys to the pizza and topping tables. A slightly different syntax from the normal declarative pattern is used to create this table, but fundamentally the same thing is happening - you are creating a table with two integer foreign key columns.
+
+There are two models. The Pizza table contains a relationship to the Topping table with a backref as usual. The difference here is that a secondary argument is also supplied, to instruct SQLAlchemy to use the association table as an intermediary table. The backref will also automatically use this table in the same way.
+
+Notice how in the example both the toppings on a pizza (pizza.toppings), and the pizzas which contain a topping (topping.pizzas) can be treated as list.
+
+Try it!
+Extend your tbay.py file to model the relationships between your User, Bid and Item classes. The models should be related according to the following rules:
+
+Users should be able to auction multiple items
+Users should be able to bid on multiple items
+Multiple users should be able to place a bid on an item
+You will need to delete and recreate your database before making the changes to the models. To do that you can run: dropdb tbay && createdb tbay.
+
+When you are happy with your classes, test them out by trying to:
+
+Add three users to the database
+Make one user auction a baseball
+Have each other user place two bids on the baseball
+Perform a query to find out which user placed the highest bid
+When your TBay application is complete, push it up to GitHub and share it with your mentor. In the next unit you will be applying your skills with Postgres and SQLAlchemy, along with a new module, Flask, to create fully-functioning web-applications.
+
+
+
+
+

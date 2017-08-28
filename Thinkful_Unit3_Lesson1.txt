@@ -1,0 +1,238 @@
+Thinkful
+
+Unit 3
+
+
+Deploying Flask apps on Heroku
+
+ Estimated Time: 27-31 hours
+In this unit, you'll learn how to build a dynamic web application in Python. You'll learn all about the Flask web application microframework and how you can use the tools provided by Flask to quickly get a web app up and running.
+
+You'll also learn several tools and techniques used by developers to make building web applications easier, including continuous integration suites like Travis CI and cloud deployment platforms like Heroku.
+
+First you will run through a quick recap of HTML and CSS by building an "About Me" website. If you are already comfortable with HTML and CSS then feel free to skip over this section. Next you will get your first web application up and running, then deploy it using Heroku. Finally you will work to create a simple blog engine, along with systems to help you test and maintain the blog.
+
+Concepts
+
+dynamic web applications
+Flask
+continuous integration
+testing
+cloud deployment
+
+----------------------------------
+
+Unit 3 / Lesson 1
+
+
+Build Your First Website
+
+ Estimated Time: 2-3 hours
+The next two lessons will give you a quick introduction to HTML and CSS. You may already be comfortable working with HTML and CSS. If so feel free to skip forward in the curriculum to the Flask Crash Course.
+
+Many people believe that websites are magic and programmers are magicians. Open Firefox or Chrome on your computer, enter a ‘web address,’ and poof — a website appears.
+
+The real process is simple. A website is a file that lives on another computer. That computer, called a "server," is configured to "serve" files over the internet. Think of the internet as a cable that connects computers. When you type a web address in your browser, you create a signal with precise directions to a server. The requested files are then served to your computer and displayed on your screen. That's all there is to it — every website you've ever used works this way.
+
+In this lesson, you'll learn how to build a basic website using HTML and CSS in less than one hour.
+
+If you want to learn more of the details behind how the internet works, check out popular blogger Marc Cohen's post on the topic here.
+
+http://mkcohen.com/how-the-web-works-in-one-easy-lesson
+
+
+----------------------------------
+
+Unit 3 / Lesson 1 / Assignment 1
+
+
+Set Up CodePen
+
+ Estimated Time: 1 hour
+In the next two lessons you're going to use a site called Codepen.io. Developers use CodePen to post snippets of front-end code to share, experiment, and get feedback from other developers. CodePen is a great learning tool because you can easily share your work with others and you'll see changes on the screen in real time. Using CodePen will also allow you to share your work with your mentor easily.
+
+Here are the steps to get set up on CodePen.
+
+1) Go to CodePen.io
+
+2) Create a new account on Codepen: Click the "Sign Up" button and scroll down the page to choose the "Free Plan". Don't worry about linking your account to GitHub for now. Once you've created an account, click the "New Pen" button at the top of the page, as pictured below.
+
+U1L1A1 Codepen New Pen Button
+
+3) Get familiar with the CodePen layout: You'll be brought to a four-pane editor. The top three panes are where you write your code - HTML on the left, CSS in the middle, and JavaScript on the right (this project won't use any JavaScript). On the bottom, CodePen will render your output on the fly, so you can see what you're building in real-time.
+
+U1L1A1 Codepen Editor
+
+3) Create a new project in CodePen Since you will be using CodePen for this assignment, create and save a new pen. To do this, click New Pen, Save, and then Info. In the Info panel, name your pen "About Me Page" and then click Save Details.
+
+----------------------------------
+
+Unit 3 / Lesson 1 / Assignment 2
+
+
+Introducing HTML
+
+ Estimated Time: 15 minutes
+Add your content: In the HTML pane of CodePen, you will type the content of your site. Content is whatever information you want displayed. It can be anything from news articles to song lyrics. For this project, copy and paste this Shakespeare-ized version of the Fresh Prince of Bel-Air theme song:
+The Fresh Prince of Bel-Air
+
+From western Philadelphia I hail
+where in my youth I'd play upon the green
+'til - rue the day! -I found myself assail'd
+by ruffians contemptible and mean.
+Although the spat was trivial and brief,
+it wounded my dear mother deep within;
+and so, to give her conscience sweet relief,
+she sent me forth to live amongst her kin.
+When to my port of call I'd been conveyed,
+I came upon a coachman most unique;
+and yet, I simply took the trip and paid,
+despite his cab's decor and fresh mystique.
+I survey all the land with princely mien
+in fair Bel-Air, where I do lay my scene.
+Mark up your paragraph with HTML: You may be able to read the copied text, but your browser can't. It must be converted into HTML. HTML stands for Hypertext Markup Language, a computer language that marks up content so that browsers can understand it. You must label every type of content with “tags” — small bits of code on either side of the text that tell the computer how to interpret the content contained within the tags. There are many different HTML tags, but you’ll start with the most commonly used ones.
+Start with the title, "The Fresh Prince of Bel-Air". The title needs header tags and your paragraph needs paragraph tags. Surround your header with an opening tag, <h1>, and a closing tag, </h1>. Notice the difference between the opening tag and closing tag. Closing tags have a slash before the tag name. "h1" stands for header1 (there's also header2, header3, and so on, for different tiers of sub-headers).
+
+Now surround your paragraph with opening and closing "paragraph tags": <p> </p>.
+
+It should look like this:
+
+    <h1>The Fresh Prince of Bel-Air</h1>
+    <p>From western Philadelphia I hail
+        where in my youth I'd play upon the green
+        'til - rue the day! -I found myself assail'd
+        by ruffians contemptible and mean.
+        Although the spat was trivial and brief,
+        it wounder my dear other deep within;
+        and so, to give her conscience sweet relief,
+        she sent me forth to live amongst her kin.
+        When to my port of call I'd been conveyed,
+        I came upon a coachman most unique;
+        and yet, I simply took the trip and paid,
+        despite his cab's decor and fresh mystique.
+        I survey all the land with princely mien
+        in fair Bel-Air, where I do lay my scene. </p>
+Make sure it worked: Check out the bottom pane of your CodePen. It should look something like this:
+firstwebsite.png
+
+You have just created your first web site. It may not be pretty, but it's a website — a file with content marked up in HTML that’s viewed in a browser. Although what you have now works, it isn’t properly formatted. Before moving forward, get your HTML page properly formatted.
+
+Clean up your HTML formatting: Here is the standard formatting for all HTML sites:
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>The Fresh Prince of Bel-Air</title>
+    </head>
+    <body>
+        <h1>The Fresh Prince of Bel-Air</h1>
+        <p>From western Philadelphia I hail
+            where in my youth I'd play upon the green
+            'til - rue the day! -I found myself assail'd
+            by ruffians contemptible and mean.
+            Although the spat was trivial and brief,
+            it wounded my dear other deep within;
+            and so, to give her conscience sweet relief,
+            she sent me forth to live amongst her kin.
+            When to my port of call I'd been conveyed,
+            I came upon a coachman most unique;
+            and yet, I simply took the trip and paid,
+            despite his cab's decor and fresh mystique.
+            I survey all the land with princely mien
+            in fair Bel-Air, where I do lay my scene. </p>
+    </body>
+</html>
+Walk through this code: 1) On line 1 add: <!DOCTYPE html>. This lets your browser know that you're using the newest version of HTML: version 5.
+
+2) Next add the opening HTML tag (<html>) and the closing HTML tag (</html>). Everything between these HTML tags will be interpreted as HTML.
+
+3) Below <html> add the <head> tag and the </head> tag. The <head> tags contains information that influences your site, but doesn't actually show up in the browser.
+
+4) Between the <head> tags add <meta charset="UTF-8">. The charset tells the browser which character set to use. You are using UTF-8 which supports nearly all the characters in the world.
+
+5) Also between the <head> tags add a title between opening and closing title tags (<title>The Fresh Prince of Bel-Air</title>). These tags set the title of the document which will appear on the browser tab and in search results. It is often the same as the <h1> text.
+
+6) Finally, put opening and closing <body> tags around the items you want displayed on the site. For this site you put the opening tag before the header and the closing tag after the paragraph.
+
+All HTML sites have these four elements: a DOCTYPE declaration at the top of the page, opening and closing <html> tags, a <head> section, and a <body>section.
+
+Next Steps: Now you have a properly formatted HTML file saved. It's time to learn how to make your website look better with CSS.
+
+
+----------------------------------
+
+Unit 3 / Lesson 1 / Assignment 3
+
+
+Introducing CSS
+
+ Estimated Time: 1 hour
+To add style to your website, you must create a new file called a "style sheet." Style sheets are written in a language called CSS (Cascading Style Sheets). The style sheet will be linked to the HTML file and will dictate how the browser presents the HTML content.
+
+1) "Select" an HTML element with CSS: In the CSS pane of CodePen let's begin by styling our header 1. First type the following code:
+
+h1 {
+
+}
+What you've coded is called a selector. By typing in h1, you now are selecting all h1 tags in your linked HTML file. Everything within the curly braces will be your actual style for the h1's.
+
+5) Add your first style: Within the curly braces type the following code:
+
+color: red;
+
+Your whole sheet should look like this:
+
+h1 {
+    color: red;
+}
+Selectors include code that designates two pieces of information -- property: value;. The property is what you're styling, and the value is how you're styling it. In this example, the property is "color" and the value is "red".
+
+Save your work.
+
+6) Test everything: Take another look in the bottom pane of your CodePen. Your header text should be bright red. Everything should look like this:
+
+finishedwebsite.png
+
+Below is the completed code. Compare what you have now to make sure everything matches up.
+
+HTML Code:
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>The Fresh Prince of Bel-Air</title>
+    </head>
+    <body>
+        <h1>The Fresh Prince of Bel-Air</h1>
+        <p>From western Philadelphia I hail
+            where in my youth I'd play upon the green
+            'til - rue the day! -I found myself assail'd
+            by ruffians contemptible and mean.
+            Although the spat was trivial and brief, 
+            it wounder my dear other deep within;
+            and so, to give her conscience sweet relief, 
+            she sent me forth to live amongst her kin.
+            When to my port of call I'd been conveyed, 
+            I came upon a coachman most unique;
+            and yet, I simply took the trip and paid,
+            despite his cab's decor and fresh mystique.
+            I survey all the land with princely mien
+            in fair Bel-Air, where I do lay my scene. </p>
+    </body>
+</html>
+CSS Code:
+h1 {
+    color:red;
+}
+In less than an hour you built a simple website with HTML and CSS. You've learned the building blocks and how to technically fit them together. Before you move on to the next project, challenge yourself to spend a few minutes making the following changes:
+
+Change the background color of the site
+Center the content of your site
+Change the text's font
+Add an "unordered list" displaying 5 other Shakespeare titles
+Add a link to Shakespeare's Wikipedia page
+Have fun and explore what HTML and CSS can do. If you get stuck, try turning to Google or asking your mentor. We'll dive into these concepts more deeply in the coming lessons.
+
+
+
+

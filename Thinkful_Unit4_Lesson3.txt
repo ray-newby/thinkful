@@ -1,0 +1,127 @@
+Thinkful
+
+Unit 4 / Lesson 3
+
+
+Capstone Project
+
+ Estimated Time: 17-19 hours
+We've come to the final lesson in this course, and it's time to bring everything you've learned so far to bear on a capstone project. Over the next three assignments, you'll devise and architect your capstone project, code up a first version, get feedback, refactor a second version based on the feedback.
+
+For the capstone, you’ll be building all or part of an MVP (minimum viable product) for a project of your choosing. Your goal should be to devise a web app with a set of features that allow users to solve a problem they have or do something interesting. The constraints for this project are high level, and it’s up to you, in dialogue with your mentor, to define the overall product you’d like to build and the portions of it you will build for your capstone project.
+
+This project is your chance to think about software development from the ground up, starting out from a problem you want your app to solve or an experience you want it to provide, then moving on to architect your solution, code it up, write tests, and refactor based on feedback. This process -- architect, code, get feedback, and refactor -- is one you can use throughout your career as a developer to get tight feedback loops between the code you write, on the one hand, and what users need and want, on the other.
+
+Goals
+
+Design an app from the ground up.
+Get more experience with domain modeling, Flask architecture, and testing web apps.
+Demonstrate your mastery of the material in this course.
+
+
+----------------------------------
+
+Unit 4 / Lesson 3 / Assignment 1
+
+
+Plan and Architect Your Capstone Project
+
+ Estimated Time: 4-5 hours
+Whenever you're starting a new programming project, it's critical to have a good sense of what you're building, for whom, and why before you write a single line of code. Ideally, you should always set out from a clear purpose statement for your application, then build a minimum product that will achieve that purpose, get feedback from users, refactor based on feedback, and repeat the feedback/refactor cycle as needed.
+
+In this first assignment for your capstone project, you'll spend some time thinking about the purpose of your app and devising a feature set to achieve this purpose. You'll share this information with your mentor, who will give you feedback. The purpose you define and features you lay out in this assignment will determine what you ultimately code up in V1 of your MVP.
+
+Steps
+
+Define the Purpose of Your App: Come up with a clear one to two sentence statement of what the app allows users to do or the problem it solves. This statement should guide all the decisions you make when it comes to defining features and sketching out your UI.
+Determine the Feature Set You'll Build: Come up with the minimum set of features you think your app will need to achieve its purpose. Work with your mentor to define the scope of your product, and what constitutes a reasonable feature set for your capstone project. If your product idea is complex and large, it may not be reasonable to tackle it all in this course, but it should be possible to complete a significant chunk.
+Define and Sketch Your Application Views: For each view (for instance, home page, log in, etc.) of your application, sketch a wireframe of what the user will see in the browser when they visit the app. You can use a pen and paper for this step or a wireframing tool like Balsamiq or a comparable tool. Even if you're a seasoned front end developer, we encourage you to keep your UI designs simple for the capstone project, as your time should mainly be spent implementing the server side of your application, not complex client side code.
+Domain Modeling: Based on your app's purpose, the feature set you've defined, and the views you want to serve end users, you'll need to define your domain models. The point here is not to actually write SQLAlchemy models (you'll do that in the next assignment). Rather, you should think about the properties and methods your models will have, and how they relate to each other, leaving aside the particulars of implementing these models in SQLAlchemy's ORM, for now.
+Deliverables
+
+For this assignment, we'd like you to share a single document with your mentor that provides describes the purpose of your app, your MVP feature set, embedded images of your view sketches, notes on your domain models.
+
+Be ready to discuss this document at your next mentor session. Together, you and your mentor will review this document and decide on the feature set you'll build for your capstone project in the next assignment. / Assignment 1
+
+
+----------------------------------
+
+Unit 4 / Lesson 3 / Assignment 2
+
+
+Capstone V1
+
+ Estimated Time: 7-8 hours
+In the previous assignment, you defined the purpose of your application, came up with a feature set, devised some sketches, and did some domain modeling. By now, you should have also had a chance to get feedback on all of this from your mentor (if you haven't discussed all of this with your mentor, be sure to do so before moving on!). Based on your feedback from your mentor, you should revise your domain models, feature set, and sketches.
+
+In this assignment, it's time to bring your application idea to life. You're basically on your own to write code that implements your feature set and views. As you start out, our best advice is to tackle a single feature at a time, and don't move on until you've got a feature working.
+
+Requirements
+
+Use Git and Github for version control.
+When you've completed V1, deploy to Heroku, and share a link to your live app and the source code (on Github) with your mentor and fellow students.
+Solicit Feedback: Get at least two people to play with the live version of your app, and talk to them about their experience. Ideally, your two "guinea pigs" should not be your mentor or a fellow student, but someone who looks like your end user. To be clear, the feedback you get here should not be about the code but the end experience of the application. You'll use this feedback in the next assignment when you do V2 of your MVP.
+Watch this video on usability testing to get a basic idea of how to conduct user tests.
+In general, when conducting user tests, it is best to have a list of tasks that you would like the user to accomplish, and then ask them to complete those tasks with minimal feedback or guidance from you. You need to see how they interact with the application without your interference.
+It helps to record your user testing sessions, either with screen capture tools, or with a physical video camera, so you can review the footage later. Also, take notes during the session, making sure to mark any points where the user struggled with the application.
+
+
+
+----------------------------------
+
+Unit 4 / Lesson 3 / Assignment 3
+
+
+Capstone V2
+
+ Estimated Time: 7-8 hours
+Congratulations, you've come to the final assignment in this course! In the previous assignment, you completed V1 of your capstone project and got feedback from your mentor as well as two end users. Based on the feedback you received, in this assignment, we'd like you to refactor your application. This is also the moment to add tests. Specifically, we'd like you to add unit tests for your models, integration tests (if necessary), and acceptance tests for the main paths through your app. If you have time, we'd also like you to configure your app for continuous integration with Travis CI.
+
+Like before, be sure to use Git/Github. And when you've completed V2, be sure to update the live version of your app. Finally, share your final product with your mentor, fellow students, family and friends, to show off all your hard work and the skills you've mastered in this course.
+
+
+----------------------------------
+
+Unit 4 / Lesson 3 / Assignment 4
+
+
+Next Steps
+
+ Estimated Time: 1 hour
+Congratulations! You've reached the end of the Thinkful Programming in Python course. By this point you've learned a whole lot of Python, created a world-beating capstone project, and are ready to go out and show the world your programming chops.
+
+We like to think that Thinkful is just one step in your journey as a coder. Hopefully as you have been working through the course you have started to get an idea of some of the next steps available to you. The variety of different routes can sometimes be a little bit daunting, so to help you on your way here are some resources which you may find useful as you continue to learn and develop your skills.
+
+Learning
+
+The Python IRC Channel is a great place to get your questions answered and hang-out with other Python developers.
+The Python Mailing Lists are the place to keep up with the latest developments in Python, and offer another avenue for getting help on any problems which you are having.
+There are a number of annual conferences and workshops where the Python community gather together to talk shop.
+Planet Python aggregates blogs from members of the Python community which cover a wide variety of topics relating to Python programming.
+Real Python, co-founded/written by mentor Michael Herman, is a great resource for advancing your Python and web development skills.
+Work
+
+StackOverflow Careers lists hundreds of available Python jobs.
+WeWorkRemotely is a great resource for finding remote work.
+LanceList provides a directory of ways to find freelance gigs.
+Fun
+
+A great way to boost your portfolio and meet other developers is to work on an open-source project. GitHub have a useful guide to contributing to open-source projects.
+Take part in a coding challenge to improve your skills. There are a whole range of challenges online, from building a game in 48 hours to solving fiendish algorithmic problems.
+
+
+----------------------------------
+
+Unit 4 / Lesson 3 / Assignment 5
+
+
+Wrapping Up
+
+We're thrilled you decided to learn with us. Shoot an email to support@thinkful.com and CC your mentor to let us know you've successfully completed the course! Then visit your settings page for information on how to conclude your enrollment.
+
+
+
+
+
+
+

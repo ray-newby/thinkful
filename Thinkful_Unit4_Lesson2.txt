@@ -1,0 +1,203 @@
+Thinkful
+
+Unit 4 / Lesson 2
+
+
+Single Page App: Tuneful
+
+ Estimated Time: 5-6 hours
+In this lesson you'll use your API building skills to create the back-end for a full-page web application. The app you are going to make is a music player, allowing you to upload audio files to your library and play them back.
+
+Goals
+
+Gain more experience building APIs with Flask
+Handle file uploads
+
+
+----------------------------------
+
+Unit 4 / Lesson 2 / Assignment 1
+
+
+Create a Song Management API
+
+ Estimated Time: 4-5 hours
+In this assignment you are going to create a basic API for storing and retrieving songs for the application.
+
+Like in the previous lesson there is a repository containing the boilerplate code for the application available. Because the focus of this course is on Python and the server side, the repository also contains the client side code that you'll use to interact with the API. This client side code expects to pull data from API endpoints on the server that you'll write together in this assignment.
+
+Notice how the client-side code is simply served from the static directory. In tuneful/views.py you have a single route for serving the static index.html page which uses the send_static_file function so you can avoid the overhead of templating.
+
+To help you to understand a little of what the client-side of the code is doing, have a read through tuneful/static/js/main.js. Some of the JavaScript syntax will be unfamiliar to you, but by reading through the comments you should be able to get a high-level understanding of what the code is doing.
+
+Now that you are comfortable with the code let's get started. First of all you should:
+
+Create a clone of the repository (git clone https://github.com/oampo/pip-tuneful-project-template tuneful)
+Move into the project's directory (cd tuneful)
+Set up a virtualenv for the project (python3 -m venv env)
+Activate the virtualenv (source env/bin/activate)
+Install the project's dependencies (pip install -r requirements.txt)
+Set up a database for the project (createdb tuneful)
+Set up a test database for the project (createdb tuneful-test)
+Try running the app using python run.py. If you visit the index URL you should see a basic (but non-functioning) user interface. Try opening up the developer console by hitting F12, and selecting the Console tab. You should see that the front-end is failing to complete its requests to the API. Let's start building our simple song management API to fix that. This can be split down into three tasks.
+
+The database
+In the file tuneful/models.py we are going to need two SQLAlchemy models.
+
+The Song model: This should have an integer id column, and a column specifying a one-to-one relationship with a File.
+The File model: This should have an integer id column, a string column for the filename, and the backref from the one-to-one relationship with the Song.
+Each model should have an as_dictionary method. The Song.as_dictionary method should produce a dictionary which looks something like this:
+
+{
+    "id": 1,
+    "file": {
+        "id": 7,
+        "name": "Shady_Grove.mp3"
+    }
+}
+The File.as_dictionary method should just return the file element of the song dictionary (i.e. {"id": 7, "name": "Shady_Grove.mp3"}).
+
+Try to create those two models, and use Python's interactive interpreter to experiment with adding Song and Files and creating relationships between them.
+
+The GET endpoint
+In the tuneful/api.py file we need a GET endpoint for /api/songs which returns a list of all of the songs as JSON. Try to follow the practice laid out in the previous lesson as you create this, adding tests as you go and trying to make your endpoint well-behaved for clients.
+
+The POST endpoint
+In the tuneful/api.py file add a POST endpoint for /api/songs which allows you to add a new song to the database. The endpoint should look for JSON POST data in the following format:
+
+{
+    "file": {
+        "id": 7
+    }
+}
+You should use the file ID to make sure that the file exists in the database, and make the relationship with your new song. Again you should try to follow the good practice for working with POST data, and write tests to make sure that your endpoint is working as you expect.
+
+Testing it out
+Now that you have the beginning of an API try adding a couple of example File and Song object to the database from the interactive Python interpreter and then visit the front-end. You should be able to see the songs listed in the left column of the site.
+
+While you are in the front-end, try adding a song using the Add Song button. You should see a failed request to the /api/files endpoint in the console as it tries to upload the file. In the next assignment you'll be looking at how file upload works on a single-page web app and writing the endpoints to get this up and running on your site.
+
+Extension task
+Add PUT and DELETE endpoints to your API allowing you to edit and delete songs from the app.
+
+
+----------------------------------
+
+Unit 4 / Lesson 2 / Assignment 2
+
+
+Uploading Files Using an API
+
+ Estimated Time: 1-2 hours
+You've already seen how simple it is to send data to an API using JSON. So surely it should be equally simple to send a file in to your application? Sadly a programmer's life is never that easy; JSON does not have a built-in way to encode binary data such as files. This leaves you with two options, each with advantages and disadvantages:
+
+You can encode the file using Base-64
+Only one HTTP request required
+Encoding and decoding the data takes time
+The data you transfer will be larger
+You can send the file as multi-part form data
+Requires two HTTP requests – one for the file and another for the related information
+No encoding and decoding required
+Less data needs transferring
+In this assignment you are going to choose the second option, sending the data as multi-part form data. This is the default method used by <form> elements for sending data to a server.
+
+Accessing files
+First you are going to add a route which will allow you to access the files which you upload. Create a test where you add a file to an upload folder then try to access it through an HTTP request.
+
+    def test_get_uploaded_file(self):
+        path =  upload_path("test.txt")
+        with open(path, "wb") as f:
+            f.write(b"File contents")
+
+        response = self.client.get("/uploads/test.txt")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "text/plain")
+        self.assertEqual(response.data, b"File contents")
+Here you're using the upload_path function, which is defined in the tuneful/utils.py file, to get the location where the file should live. Create the file, then send a GET request to /uploads/<filename>. You check that the response contains the correct file with the right mimetype.
+
+Now add your route to try to make the test pass:
+
+@app.route("/uploads/<filename>", methods=["GET"])
+def uploaded_file(filename):
+    return send_from_directory(upload_path(), filename)
+Again this is very straightforward. Use the Flask send_from_directory function to serve the file from the upload path. Try running your tests using nosetests tests. You should now have a way to retrieve files using your API.
+
+Test first
+Next you'll put together a test which tries to upload a simple text file to the server. In the TestAPI class in the tests/api_tests.py file try adding the following test:
+
+    def test_file_upload(self):
+        data = {
+            "file": (BytesIO(b"File contents"), "test.txt")
+        }
+
+        response = self.client.post("/api/files",
+            data=data,
+            content_type="multipart/form-data",
+            headers=[("Accept", "application/json")]
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.mimetype, "application/json")
+
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(urlparse(data["path"]).path, "/uploads/test.txt")
+
+        path = upload_path("test.txt")
+        self.assertTrue(os.path.isfile(path))
+        with open(path, "rb") as f:
+            contents = f.read()
+        self.assertEqual(contents, b"File contents")
+There are a few things to notice here. You're constructing the form data as a dictionary, using an instance of the Python BytesIO class to simulate a file object (you can import this class from the io module). You then send this dictionary to the /api/files endpoint with a content type of multipart/form-data. Finally you carry out a series of checks, making sure that the response data points you to a URL where you can access the file, and that the file has been saved correctly in an upload folder specified in the tuneful/config.py file.
+
+Try running the test. You should see that the request fails with a 404 error.
+
+Writing the endpoint
+Next you can write the endpoint to handle the uploads. In the tuneful/api.py file try adding the following endpoint:
+
+@app.route("/api/files", methods=["POST"])
+@decorators.require("multipart/form-data")
+@decorators.accept("application/json")
+def file_post():
+    file = request.files.get("file")
+    if not file:
+        data = {"message": "Could not find file data"}
+        return Response(json.dumps(data), 422, mimetype="application/json")
+
+    filename = secure_filename(file.filename)
+    db_file = models.File(filename=filename)
+    session.add(db_file)
+    session.commit()
+    file.save(upload_path(filename))
+
+    data = db_file.as_dictionary()
+    return Response(json.dumps(data), 201, mimetype="application/json")
+You're trying to access the uploaded file from Flask's request.files dictionary. If you don't find the file you return an error in the usual way.
+
+Next you use the Werkzeug secure_filename function to create a safe version of the filename which the client supplies. This prevents malicious users from creating files anywhere on the server by passing in specially crafted filenames. So for example the path ../../../etc/passwd (which could point to the file containing the authorized users for the server) is replaced by etc_passwd.
+
+Use your secure filename to create the File object and add it to the database. (Be sure to check this code against your actual model, to make sure you have the same column names.) Then you can use the upload_path function which is defined in the tuneful/utils.py file to save the file to an upload folder.
+
+Lastly you use the File.as_dictionary method to return the file information. At the moment this does not return the path of the uploaded file. Update this method to return the location where you can access the file:
+
+def as_dictionary(self):
+    return {
+        "id": self.id,
+        "name": self.filename,
+        "path": url_for("uploaded_file", filename=self.filename)
+    }
+Try running the test again. You should now have a working method of uploading files to the application.
+
+Try firing up the server using python run.py and visit the site, then upload a song using the Add Songs button. There is an audio file called chords.wav in the root directory which you can use to test this out. When the song has uploaded you should be able to select it and listen to it using the player at the bottom of the interface.
+
+
+
+
+
+
+
+
+
+
+
+

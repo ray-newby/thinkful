@@ -1,0 +1,704 @@
+Thinkful
+
+Unit 3 / Lesson 3
+
+
+Flask Crash Course
+
+ Estimated Time: 5-6 hours
+In this lesson, you're going to learn the basics of building dynamic web applications in Python. First, you'll learn about the basic concepts that power dynamic web applications, including the HTTP protocol, URLs and DNS. Next, you'll learn how to use the Flask web application framework to structure a basic "Hello World" web app. You'll also learn how the concepts you learned earlier are used in practice by the Flask framework. Finally, you'll learn how to deploy this basic web application to the web using the Heroku Platform-as-a-Service.
+
+Goals
+
+Be able to explain the HTTP protocol and how it standardizes communication across the web.
+Be able to describe what a DNS server does.
+Understand the difference between a static web application and a dynamic web application.
+Create a basic Flask app from scratch.
+Be able to describe how Flask 'routes' a URL to a server action.
+Deploy a Flask application on Heroku to make it accessible to anyone on the internet.
+
+
+----------------------------------
+
+Unit 3 / Lesson 3 / Assignment 1
+
+
+Get Hands-On with HTTP
+
+ Estimated Time: 1 hour
+In this unit you'll be building dynamic web applications in Python using Flask and SQLAlchemy. Before looking at the details of using Flask, in this assignment you'll be taking a hands-on look at the protocol which forms the backbone of the web: HTTP.
+
+Making HTTP requests using cURL
+
+HTTP is the protocol which powers the web. Every time you visit a website you are making HTTP requests, and receiving responses from a server. To explore this you can use a little program called cURL. According to the manual, "curl is a tool to transfer data from or to a server" using a variety of protocols. One of those protocols is HTTP. And that's all it really is: a protocol for transferring data. Open up a terminal, and let's write your first curl command:
+
+$ curl http://httpbin.org/ip
+{
+  "origin": "54.235.221.217"
+}
+This is a JSON-encoded response with the IP address of the origin of the request. So, what happened there?
+
+This command sends a request, using the HTTP protocol, to the server at the location httpbin.org and requests the /ip endpoint. Specifically, the location of httpbin.org is 107.20.202.171; a Domain Name Server (DNS) points us to that numeric IP address when we send the request to httpbin.org. The DNS acts a bit like the white pages – it tells you the physical location of a server (the IP address) when you look up a website's URL.
+
+On the httpbin server, there is a program setup to respond whenever a client (that's you!) sends a request. In the case of the /ip endpoint, the server simply reads the IP address of the client and sends it back in JSON format. httpbin.org is actually an open source Python program, and you can see the specific code for generating this response here. If you're confused by what that code means right now don't worry! You'll understand it by the end of the course when you learn to make Flask apps of your own.
+
+This example illustrates a dynamic site: the response depends on information provided by the client; in this case your IP address. This is as opposed to a static site, which simply responds with pre-generated HTML files for viewing or downloading. It also shows the foundational architecture of the Internet. There is a client, in this case your computer*, sending a request to a server, in this case httpbin.org. Whenever you open a web page or do anything on the Internet that loads data to or from somewhere else, there is a client-server interaction going on somewhere.
+
+* Technically, the client in this request is your Cloud9 workspace, but it's all the same to your in-browser terminal.
+
+HTTP headers
+
+HTTP as a protocol does more than just send IP addresses, however. Try this request:
+
+$ curl http://httpbin.org
+This requests the homepage of httpbin.org. Curl automatically outputs the body of the response to your terminal. You should see a bunch of HTML markup scroll on the screen. In this case, the server at httpbin.org was not configured to send a JSON-encoded response, but instead sent an HTML-encoded response. Your terminal doesn't know how to display HTML/CSS, but your browser does! Try opening http://httpbin.org and http://httpbin.org/ip in your browser. You'll see that the root endpoint displays a lovely web page, while the /ip endpoint just displays the same thing as your terminal.
+
+But how does your browser know to display the HTML as a web page, and the JSON as just text? Well, HTTP also includes headers in every request. These headers contain fields and values which the client uses to interpret the body of the request. Try each of these commands separately:
+
+$ curl -I http://httpbin.org
+...
+$ curl -I http://httpbin.org/ip
+The -I switch tells curl to only fetch the HTTP-header set by the server. Take a look at the Content-Type field. The first command should have responded with text/html, the second with application/json. This field tells the client how to interpret the information, so the browser knows whether it should render the body of the request as an HTML web page, or simply display the text as JSON-encoded data.
+
+Okay, so now you understand how to request and receive information from a server. But the Internet (and HTTP) does more than just look up info. You can send commands with HTTP to tell the server what to do. These are called the CRUD commands because they allow you to create, read, update, and delete information on the server. The specific HTTP commands are:
+
+POST: create a new record or piece of information on the server.
+GET: retrieve information from the server.
+PUT: update some piece of information.
+DELETE: destroy the specified information on the server.
+HTTP has more commands, but these are the basics. Note that all of the commands are verbs; that is because these commands do something. Notice how HTTP uses the same CRUD design pattern as the SQL database you looked at in the previous unit. To learn more about these other types of requests, go to RequestBin in your browser and click "Create a RequestBin."
+
+When you don't provide any arguments to curl it defaults to making a GET request. You can make your first POST request like this, replacing "UIDHERE" with the specific endpoint that RequestBin gives you:
+
+$ curl -X POST -d "fizz=buzz" http://requestb.in/UIDHERE
+ok
+If all went well, the RequestBin server responded with ok. If you refresh the RequestBin URL in your browser, you'll see a webpage with all of the details of your POST request. Although it's not displayed in this example, the OK response from the server will also have a status code attached to it -- in this case 200.
+
+It's useful to know the different HTTP codes, which are categorized by the hundreds:
+
+1xx: Informational
+2xx: Successful
+3xx: Redirection
+4xx: Client Error
+5xx: Server Error
+These general codes are all you need to know for basic debugging purposes. The specific codes can be looked up at the W3's HTTP Spec, or via Google.
+
+Try It!
+
+Use curl to explore:
+
+What headers your client sends to httpbin. If you make a GET request to http://httpbin.org/headers, httpbin will return JSON containing these headers.
+What status code is used when httpbin redirects your client -- view the headers returned when making a GET request to http://httpbin.org/redirect-to?url=http://google.com
+What headers some of your favourite websites set. Try looking up some of the more interesting sounding ones to see what they are used for.
+Final words
+
+This was a basic introduction to HTTP and client-server interaction. There is a great deal more which you could learn about HTTP; the specification runs to hundreds of pages of text. However, it's often a good idea to dive in and start exploring these concepts hands-on. Lucky for you, in the next assignment you get to build a tasty web application with Flask. Code responsibly.
+
+What is HTTP?
+HTTP (hypertext transfer protocol) is a protocol governing how messages sent between client and server should be formatted.
+What's the difference between an HTTP response header and body?
+The header contains metadata about the request, such as content type, size, and response status code. The body (if any) contains the requested resource: for instance, an HTML page or image file.
+How can you use Google Chrome Developer tools to inspect HTTP request and response objects?
+Open the Network tab in Chrome Developer tools.
+What is a DNS and how does it relate to URLs?
+A DNS is a Domain Name Server. It is like a phone book where you look up a domain name and get back its numeric IP address, which is where your HTTP request actually is made to.
+What is the role of the server in a static vs. dynamic site?
+For a static site, the server just supplies unchanging assets that remain the same no matter when the request is made. For a dynamic site, the server is responsible for running a program that dynamically generates the file(s) that get returned to the browser in the response object.
+
+
+----------------------------------
+
+Unit 3 / Lesson 3 / Assignment 2
+
+
+Hello World in Flask
+
+ Estimated Time: 1-2 hours
+In the previous assignment you learned about web apps. In the rest of this unit you'll learn how to build web apps in Python using Flask, a web micro-framework. Flask provides a number of tools designed to simplify the most common tasks you'll encounter when writing web apps. It features a small core that can be easily customized and extended to easily add functionality to your apps.
+
+Your first Flask app
+
+Get started by creating a really simple "Hello World" Flask application. You'll first need to create a new directory and install Flask in a virtualenv. Virtualenv is a tool which allows you to create an isolated Python environment. This means that you can install libraries on a per-project basis. So, for example, you could have one project using version 0.9 of Flask, and another using version 0.10.
+
+Create a directory for the project - mkdir flask_hello_world
+Move into the project directory - cd flask_hello_world
+Create a new virtualenv - python3 -m venv env
+Activate the virtualenv - source env/bin/activate
+Install Flask - pip install flask
+There are couple of things to note here. You will see a number of warnings and messages while Flask and its dependencies are being built. This is perfectly normal – just make sure that one of the final messages says that Flask was successfully installed.
+
+Note that when you are inside an activated virtualenv you can deactivate it at any time by running deactivate. It can be re-activated by sourcing the activate script again.
+
+Now in your project directory create a new file called hello_world.py. In this file you'll initialize Flask and then create a view function that will greet you when you visit a certain URL. Add the following content to your file:
+
+from flask import Flask
+from os import environ
+
+app = Flask(__name__)
+
+@app.route("/")
+@app.route("/hello")
+def say_hi():
+    return "Hello World!"
+
+if __name__ == "__main__":
+    app.run(host=environ['IP'],
+            port=int(environ['PORT']))
+Here's what is happening:
+
+You import the Flask class. This will be the basis of the application.
+You then import the environ dictionary from os to get access to environment variables from Cloud9.
+Then you create an instance of the class called app, passing in the __name__ variable to tell the app where it is being run from.
+Next you create a function called say_hi, which returns the string "Hello World!". This function is decorated twice using the app.route method. This method is used to decorate every Flask view. It says that when you visit either the root URL '/' or the /hello URL of the Flask application, the say_hi function should run. You will take a closer look at decorators in a moment, so don't worry if this isn't entirely clear yet.
+In the main block you run the application using the app.run method. You use the host and port arguments to tell the application to listen on the values from the Cloud9 workspace environment.
+Now try running the app and visiting the route. Fire up the app by running python3 hello_world.py from the command line. You should see something like this:
+
+$ python3 hello_world.py 
+ * Running on http://0.0.0.0:8080/ (Press CTRL+C to quit)
+This tells you that the Flask development server is listening for requests on port 8080. Try making a request to the say_hi view and seeing what happens. There are two ways to do this from Cloud9:
+
+The easy way. Click the Preview button in the top bar once you've started your program, and choose "Preview running application". This will open a preview window in your workspace.
+The other way. Cloud9 does some systems magic so your Flask application has a URL you can reach from outside. That URL is in the address bar of the preview window of the "easy way" above, but it's also in the Cloud9 terminal environment. You can find it by typing echo $C9_HOSTNAME in the terminal. The result will be something like thinkful-pip-1-thinkful.c9.io. with thinkful-pip-1 replaced by the name of your Cloud9 workspace, and with thinkful replaced by your user name on Cloud9. Open a new browser tab and put that into the address bar, and you should see your "Hello, world" there.
+Try accessing the say_hi view by adding /hello to the URL of the page which preview opened. Visiting this URL should cause the browser to display Hello World! message, which is the string you told our view to return.
+
+A note on decorators
+
+In the previous code you made use of a decorator to tell Flask what action to perform when a certain URL is visited. You can think of decorators as a way to quickly add features to your functions. For example the app.route decorator adds the feature "when the user visits the specified URL, the decorated function should be run". Flask provides several useful decorators to our application.
+
+To decorate a function you use the @ symbol, followed by the name of the decorator. For example:
+
+@decorator
+def function():
+    pass
+In actual fact this is just some syntactic sugar for the following code:
+
+def function():
+    pass
+function = decorator(function)
+Think about what is happening here. Initially function is just a regular function which you know and love. Then it is redefined to be the result of passing it into another object. So what is function replaced with when it is redefined, and how does this allows you to add a feature?
+
+Take a look at this example decorator:
+
+def twist(function):
+    def wrapper():
+        print("Shep Schwab shopped at Scott's Schnapps shop")
+    return wrapper
+The decorator is a function called twist, which takes a single argument. This argument is the function which you want to decorate. Then there is a nested function, called wrapper which for now prints a tongue-twister. Finally the twist function returns the inner wrapper function.
+
+What happens when you use this? Look at how it is used it to decorate a function:
+
+@twist
+def spoon():
+    print("A well-boiled icicle")
+And remember that this code is the equivalent to:
+
+def spoon():
+    print("A well-boiled icicle")
+spoon = twist(spoon)
+The function spoon is replaced by the return value of the twist function. So spoon is replaced by the inner wrapper function of the twist decorator. When you try calling spoon you should see the tongue-twister rather than the spoonerism being printed.
+
+At this point you have replaced the functionality of spoon with the functionality of wrapper rather than extending it. But remember that you are passing the spoon function into the decorator. Try making a slight change:
+
+import functools
+
+def twist(function):
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        print("Shep Schwab shopped at Scott's Schnapps shop")
+        function(*args, **kwargs)
+    return wrapper
+The function which is passed in is now being called inside the wrapper function. So when you call the decorated spoon function (which is actually the wrapper function), the tongue-twister will be printed, and then the original undecorated spoon function will be called, printing the spoonerism. (The use of *args and **kwargs allows you to pass any number of arguments on to this function. It means you don't need to care what parameters it expects - they'll all be passed along. Thanks to functools.wraps, the documentation will still be correct, too.)
+
+If you wanted to pass argument into the decorator (like in app.route) you need to add one more level of nesting. So for example, to to allow the tongue-twister to be changed you could use the following code:
+
+import functools
+
+
+def twist(twister):
+    def decorator(function):
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            print(twister)
+            function(*args, **kwargs)
+            print(twister)
+        return wrapper
+    return decorator
+Notice how the inner decorator function is identical to our earlier twist function, except that it now prints the argument provided to our new twist function. You can now change the tongue-twister using the following code:
+
+@twist("She sells sea shells on the sea shore")
+def spoon():
+    print("A well-boiled icicle")
+Making it more personal
+
+Next you are going to add a second view that will give a more personal greeting. When you visit /hello/alice the page will say "Hello Alice!", and when you visit /hello/bob it will say "Hello Bob!". Add this second view to your hello_world.py file:
+
+@app.route("/hello/<name>")
+def hi_person(name):
+    return "Hello {}!".format(name.title())
+Here you change the route slightly to /hello/<name>. The <name> part of this is a placeholder, which will take a string and forward it to the view function as a keyword argument. Notice the added name argument to the view function so you can accept this string.
+
+Then in our hi_person view you simply return a formatted string which contains name.title(). The title method of a string object simply returns the string with the first letter of each word capitalized.
+
+Start your application again by running python3 hello_world.py, then visit /hello/YOUR_NAME. You should see your app greeting you by name.
+
+Returning some HTML
+
+You've already created a static and dynamic hello world endpoint using Flask. Before moving on, let's pause for a second to consider what is actually happening when you return a string from our view functions. You are not simply returning a string to the browser. You saw in Unit 2 how the HTTP protocol expects responses with a whole heap of extra data contained in the headers.
+
+Actually when you return a string this all happens behind the scenes. Flask automatically constructs a Response object with the correct headers set. If you don't specify a status in the return value, Flask will assume that it should reply with 200 OK if all went well.
+
+And what happens to the string that you send back to the browser? When you don't specify what type of data you're returning Flask assumes that you are sending HTML, and it adds a content-type header telling the browser that the data consists of HTML. This means that the browser should interpret the string as HTML.
+
+You can see this by changing one of the views slightly to return some HTML data:
+
+@app.route("/hello/<name>")
+def hello_person(name):
+    html = """
+        <h1>
+            Hello {}!
+        </h1>
+        <p>
+            Here's a picture of a kitten.  Awww...
+        </p>
+        <img src="http://placekitten.com/g/200/300">
+    """
+    return html.format(name.title())
+This is pretty much exactly the same as our earlier hello_person code, except you've made the return string contain some HTML tags. Try running your code and then visit /hello/YOUR_NAME again. You should see that the HTML is correctly interpreted by the browser, so our page now contains some simple presentation and an image.
+
+Try It!
+
+Try making a new view called /jedi. In this view, you should work out what a person's Jedi name is, and return it to them as HTML. Your Jedi name is the first three letters of your last name, followed by the first two letters of your first name. So visiting /jedi/beyonce/knowles should tell you that your Jedi name is "knobe".
+
+Final words
+
+Although manually constructing HTML works fine for small examples it quickly becomes unwieldy when you require more complex HTML pages. In the next assignment you are going to look at how to use templates to make constructing and returning complex HTML documents much more straightforward.
+
+How do we construct a Flask object to use as a base for Flask apps?
+Import Flask into your application file, then create an application instance like this: app = Flask(__name__).
+What is a view function, and when is it called?
+A view function creates and returns a response for a particular URL path. In Flask, we wrap all view functions with the @app.route() function.
+How do we run different view functions depending on which URL is entered?
+A view is tied to a particular URL route. Whichever route is defined in the @app.route() block will trigger the view function.
+Give an example of a URL that would match this route: /bands/<band_name>/songs/<song_title>/lyrics.
+/bands/def+leppard/songs/hysteria/lyrics
+Can you describe what happens when a view function returns a string?
+Flask treats plain text strings as HTML objects, and it supplies the appropriate HTTP response headers and status codes, which it returns along with the response body (in this case, a string).
+
+
+----------------------------------
+
+Unit 3 / Lesson 3 / Assignment 3
+
+
+Templating in Flask using Jinja
+
+ Estimated Time: 1-2 hours
+Developed by Thinkful Mentor Michael Herman. Originally posted on Real Python.
+
+In the previous assignment you returned HTML as a string using Flask. In this assignment you'll learn how to use Jinja templates to construct the HTML you want to display. Templating allows you to separate HTML from the view functions and construct complex HTML pages in a simpler, more modular way.
+
+Right out of the box, Flask includes the powerful Jinja templating language. It’s modeled after Django templates (but it renders much faster) and, although Flask does not force you to use any templating language, it assumes that you’ll be using Jinja since it does come pre-installed.
+
+For those who have not been exposed to a templating language before, such languages essentially contain variables as well as some programming logic, which when evaluated (or rendered into HTML) are replaced with actual values. The variables and/or logic are placed between tags or delimiters. For example, Jinja templates use {% ... %} for expressions or logic (like for loops), while {{ ... }} are used for outputting the results of an expression or a variable to the end user. The latter tag, when rendered, is replaced with a value or values, and are seen by the end user.
+
+Jinja Templates are just .html files. By convention they live in the “/templates” directory in a Flask project. If you’re familiar with string formatting or interpolation, templating languages follow a similar type of logic – just on the scale of an entire HTML page.
+
+Quick Examples
+
+Make sure you have Jinja installed before running these examples – pip install jinja2
+
+>>> from jinja2 import Template
+>>> t = Template("Hello {{ something }}!")
+>>> t.render(something="World")
+'Hello World!'
+>>>
+>>> t = Template("My favorite numbers: {% for n in range(1,10) %}{{n}} {% endfor %}")
+>>> t.render()
+'My favorite numbers: 1 2 3 4 5 6 7 8 9 '
+Notice how the actual output rendered to the user falls within the {% %} tags.
+
+Flask Examples
+
+First you will need to create a new project:
+
+Make a new project directory – mkdir jinja_example
+Move into the directory – cd jinja_example
+Make a templates directory – mkdir templates
+Set up a virtualenv – python3 -m venv env
+Activate the virtualenv – source env/bin/activate
+Install Flask – pip install flask
+Then make a new file called run.py and add the following code:
+
+from flask import Flask, render_template
+app = Flask(__name__)
+
+@app.route("/")
+def template_test():
+    return render_template('template.html', my_string="Wheeeee!",
+                           my_list=[0,1,2,3,4,5])
+
+if __name__ == '__main__':
+    app.run(debug=True, host="0.0.0.0", port=8080)
+Here you are establishing the route /, which renders the template template.html via the function render_template(). This function must have a template name. Optionally, you can pass in arguments to the template, like in the example – my_string and my_list.
+
+Next make a template and save it as template.html in the templates directory:
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Flask Template Example</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            div#main {
+                max-width: 500px;
+                padding: 20px;
+            }
+
+            nav .title {                                                        
+                font-weight: bold;
+            }
+
+            a.active {
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="main">
+            <p>My string: {{my_string}}</p>
+            <p>Value from the list: {{my_list[3]}}</p>
+            <p>Loop through the list:</p>
+            <ul>
+                {% for n in my_list %}
+                <li>{{n}}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </body>
+</html>
+Notice the template tags in the HTML. Can you guess the output before you run the app?
+
+Run the app using python3 run.py, and view the page in your browser (as per the technique in the last section). You should see the following:
+
+Flask preview
+
+It’s worth noting that Jinja only supports a few control structures: if statements and for loops are the two primary structures. The syntax is similar to Python, differing in that no colon is required and that termination of the block is done using an endif or endfor instead of by whitespace. You can also complete the logic within your Python code and then pass each value to the template using the template tags. However, it is much easier to perform such logic within the templates themselves.
+
+Inheritance
+
+Templates usually take advantage of inheritance, which includes a single base template that defines the basic structure of all subsequent child templates. You use the tags {% extends %} and {% block %} to implement inheritance.
+
+The use case for this is simple: As your application grows, and you continue adding new templates, you will need to keep common code (like an HTML navigation bar, JavaScript libraries, CSS stylesheets, and so forth) in sync, which can be a lot of work. Using inheritance, you can move those common pieces to a parent template so that you can create or edit such code once and all child templates will inherit that code.
+
+You should always add as much recurring code as possible to your base template to save yourself time in the future, which will far outweigh the initial time investment.
+
+Next you'll add inheritance to the example. First create the base (or parent) template in a file called base.html:
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Flask Template Example</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            div#main {
+                max-width: 500px;
+                padding: 20px;
+            }
+
+            nav .title {
+                font-weight: bold;
+            }
+
+            a.active {
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="main">
+            <h2>This is part of my base template</h2>
+            <br>
+            {% block content %}{% endblock %}
+            <br>
+            <h2>This is part of my base template</h2>
+        </div>
+    </body>
+</html>
+Did you notice the {% block %} tag? This defines a block (or area) that child templates can fill in. Think of these as placeholders to be filled in by code from the child template(s).
+
+Update your template.html to inherit from base.html:
+
+{% extends "base.html" %}
+
+{% block content %}
+    <h3> This is the start of my child template</h3>
+    <br>
+    <p>My string: {{my_string}}</p>
+    <p>Value from the list: {{my_list[3]}}</p>
+    <p>Loop through the list:</p>
+    <ul>
+        {% for n in my_list %}
+        <li>{{n}}</li>
+        {% endfor %}
+    </ul>
+    <h3> This is the end of my child template</h3>
+{% endblock %}
+The {% extends %} informs the templating engine that this template “extends” another template, base.html. This establishes the link between the templates, in other words.
+
+Try visiting your page again. You should see this:
+
+Flask preview 2
+
+One common use case is to add a navigation bar.
+
+Add the following code to the base template, just after the opening <body> tag:
+
+<nav>
+    <span class="title">Jinja!</span>
+    <a href="#">Home</a> |
+    <a href="#">About</a> |
+    <a href="#">Contact Us</a>
+</nav>
+Now every single child template that extends from the base will have the same navigation bar. To steal a line from Java philosophy: “Write once, use anywhere.”
+
+Flask preview 3
+
+Super Blocks
+
+If you need to render a block from an inherited template then you can use a super block:
+
+{{ super() }}
+Add a footer to the end of the body in base.html:
+
+<footer>
+    {% block footer %}
+        Watch! This part of the footer is coming from the base template...
+        <br>
+        <br>
+    {% endblock %}
+</footer>
+When you visit your page you should see that the footer is just part of the base:
+
+Jinja super
+
+Now, redefine the footer in the child template, using the super function so that you extend the base's content rather than completely overriding it. Add the following code to the end of template.html:
+
+{% block footer %}
+{{super()}}
+...and this addition to the footer is coming from the child template.
+{% endblock %}
+Check it out in your browser:
+
+Jinja super 2
+
+Notice how the child template uses the base template's footer block – the super block is used for the common code that both the parent and child templates share.
+
+Macros
+In Jinja, you can use macros to abstract commonly used code snippets that are used over and over to not repeat yourself. For example, it’s common to highlight the link of the current page on the navigation bar (active link). Otherwise, you’d have to use if/elif/else statements to determine the active link. Using macros, you can abstract out such code into a separate file.
+
+Make a new file called macros.html, and add the following content.
+
+{% macro nav_link(endpoint, name) %}
+{% if request.endpoint.endswith(endpoint) %}
+    <a href="{{ url_for(endpoint) }}" class="active">{{name}}</a>
+{% else %}
+    <a href="{{ url_for(endpoint) }}">{{name}}</a>
+{% endif %}
+{% endmacro %}
+Here, you’re using Flask’s request object, which is part of Jinja by default, to check whether the link points to the current page. If so then you'll add the active class to the <a> tag.
+
+Next, add three new routes to run.py:
+
+@app.route("/home")
+def home():
+    return render_template('template.html',
+                           my_string="I'm the home page",
+                           my_list=[0,1,2,3,4,5])
+
+@app.route("/about")
+def about():
+    return render_template('template.html',
+                            my_string="I'm the about page",
+                            my_list=[0,1,2,3,4,5])
+
+@app.route("/contact")
+def contact():
+    return render_template('template.html',
+                           my_string="I'm the contact page",
+                           my_list=[0,1,2,3,4,5])
+Finally, update the links in the base template to use our new macro:
+
+<ul class="nav navbar-nav">
+  {{ nav_link('home', 'Home') }}
+  {{ nav_link('about', 'About') }}
+  {{ nav_link('contact', 'Contact Us') }}
+</ul>
+Also, make sure to add the import at the top of the template: {% from "macros.html" import nav_link with context %}.
+
+Notice how you’re calling the nav-link macro and passing it two arguments, the link location and the text you want displayed.
+
+Refresh the page. Test out the links at the top. Does the current page get highlighted? It should.
+
+Jinja macros
+
+Custom Filters
+
+Jinja uses filters to modify variables, mostly for formatting purpose.
+
+For example:
+
+{{ num | round }}
+This will round the num variable. So, if you pass argument num=46.99 into the template, 47.0 will be outputted.
+
+As you can tell, you specify the variable then a pipe (|) followed by the filter. Check out this link for the list of filters already included within Jinja. In some cases, you can specify optional arguments in parentheses.
+
+For example:
+
+{{ list|join(', ') }}
+This will join a list by the comma delimiter.
+
+Test this out. Add the following line to template.html
+
+<p>Same list with a filter: {{ my_list|join(', ') }}</p>
+Now, besides the built-in filters, you can create your own.
+
+One common example is a custom datetime filter.
+
+Add the following code to run.py after you create the app variable:
+
+@app.template_filter()
+def datetimefilter(value, format='%Y/%m/%d %H:%M'):
+    """Convert a datetime to a different format."""
+    return value.strftime(format)
+Using the @app.template_filter() decorator you are registering the datetimefilter() function as a filter.
+
+The default name for the filter is just the name of the function; however, you can customize it by passing in an argument to the function – e.g, @app.template_filter("formatdate").
+
+Next, you are adding the filter to the Jinja environment, making it accessible. Now it’s ready to use.
+
+Add the following code to the child template:
+
+<h4>Current date/time: {{ current_time | datetimefilter }}</h4>
+Finally, in run.py pass in the datetime to your template along with my_list and my_string (remembering to import the datetime module at the top of the file:
+
+current_time=datetime.datetime.now()
+Jinja filter
+
+Try It!
+
+Take your Hello World app from the previous exercise, and modify it so that it uses Jinja as a template engine instead of Python string formatting.
+
+Where does the render_template function look for templates by default?
+In a folder called "templates" in the current directory.
+What arguments can you pass to render_template, and how are these accessed from within a template?
+First the name of the template file, followed by optional keyword arguments.
+What is the difference between {{ }} tags and {% %} tags?
+{{ }} is used for outputting the results of an expression or variable, while {% %} is used for logic (for instance, for loops).
+How do you inherit from a parent template? Why is this helpful?
+You use {% extends %} and {% block %}. You define a parent template and insert placeholders for sections of content that will vary between pages. The advantage is that display code that is shared across pages only gets defined in one place and is therefore more maintainable.
+What is the super block used for?
+super is used for bits of code that are defined in a parent template but need to be accessed in one or more child templates. super() will render the contents of the block defined in the parent.
+How do you create a template macro? How do you call it from a template?
+jinja {% macro macro_name(param1='default_value', param2='default_value',...) %} <p id="{{ param1 }}" class="{{ param2 }}">HTML content goes here</p> {% endmacro %} If the macro was defined in the same template, you can just call it like a function: jinja <div>{{ macro_name("foo", "bar") }}</div> If the macro was defined in a different template, you must import it before using it. See http://jinja.pocoo.org/docs/templates/#macros for more information.
+What does the pipe (|) symbol do inside a tag?
+It pumps the output of one filter into another.
+
+
+----------------------------------
+
+Unit 3 / Lesson 3 / Assignment 4
+
+
+Deploying Flask apps on Heroku
+
+ Estimated Time: 1-2 hours
+In this assignment you'll learn how to host apps on Heroku by deploying your Hello World application from earlier in this lesson. Heroku is a platform-as-a-service (PaaS) that allows you to deploy web applications to virtual machines known as dynos. When someone visits your site, a dyno is accessed and used to serve your content.
+
+First create a Heroku account if you don't already have one. To push your code to Heroku, you'll be using the Heroku Toolbelt, a command-line tool that interfaces with git and a few other things. If you're using Cloud9 you don't need to install anything because the Heroku Toolbelt is pre-installed.
+
+After you have your Heroku account set up, you need to login to Heroku using the Heroku Toolbelt.
+
+Login to Heroku by executing heroku login at the command line:
+
+$ heroku login
+Enter your Heroku credentials.
+Email: frodo@example.com
+Password:
+Could not find an existing public key.
+Would you like to generate one? [Yn]
+Generating new SSH public key.
+Uploading ssh public key /Users/frodo/.ssh/id_rsa.pub
+Great! You're signed into Heroku at your command line. Now you're ready to create your first app. Make sure you're inside the flask_hello_world directory and then type in the terminal:
+
+$ heroku create
+Creating stark-fog-398... done, stack is cedar
+http://stark-fog-398.herokuapp.com/ | git@heroku.com:stark-fog-398.git
+Git remote heroku added
+Heroku generates a random project name for you, and sets up a subdomain at http://example-app.herokuapp.com. If you go to the Heroku Dashboard you should see your app.
+
+Now, before you can setup a dyno to host your app, you need a server that the dyno can use. There is a wonderful, lightweight, pure-Python server called Gunicorn that you can install with pip:
+
+$ pip install gunicorn
+To configure your dyno to properly use Gunicorn with your app, create a Procfile, short for "process file." The Procfile is simple:
+
+$ echo 'web: gunicorn hello_world:app --log-file=-' > Procfile
+This creates the Procfile and echos the instructions into it. You can open the Procfile or cat Procfile to verify. The gunicorn command takes the name of your module or package, in this case hello_world, followed by a colon, and then the name app, which will be imported from it. The --log-file switch just says "don't create a log file."
+
+Finally, you need to specify your Python version. Check their list of supported Python runtimes and choose the latest supported Python 3 version; then declare that as your application's preferred runtime:
+
+$ echo python-3.7.5 > runtime.txt
+Be sure to replace 3.7.5 with the actual version number listed in Heroku's documentation.
+
+Your project is now ready to push to Heroku, however you'll want to test it to make sure that it works. You can do this with the "heroku local" webserver, auto-installable by the Heroku toolbelt:
+
+$ heroku local
+The first time you run this, it will go out and download the necessary code; be patient. Once that's done, future usage will be a lot faster. This starts a webserver which you can view in your Cloud9 workspace with Preview > Preview running application
+
+If everything works as it should, then you're ready to push your app to Heroku! First, kill the 'heroku local' process with Ctrl-c. If you haven't made a requirements.txt, you'll need one:
+
+$ pip freeze > requirements.txt
+It's best to save your progress in a git commit to master now. After you've done that, you can push your app to Heroku using git:
+
+$ git push heroku master # Now you can push to Heroku
+You should see a bunch of notifications in the terminal. After it's done, you make sure you have a dyno running to serve the app:
+
+$ heroku ps:scale web=1
+Scaling web processes... done, now running 1
+Heroku gives you one free dyno to use per month. Any more than that, and you gotta pay. But for now, all you need is one.
+
+Okay, now you've got your code setup with a Procfile and a gunicorn server, you tested the code with 'heroku local', you've pushed your code to the Heroku platform, and you started a dyno, all with just a few commands. The only thing left to do is to open it up and check it out!
+
+$ heroku open
+This will launch a browser window pointed toward your app on the Heroku servers. (If it doesn't work, you can always find your app via the Heroku Dashboard or at http://app-name.herokuapp.com.
+
+And that's the basics of the Heroku platform. The great thing about Heroku (in addition to giving you a free dyno, which is enough for hosting a personal app), is that it's so easy to use and integrate with your existing git workflow. If you're interested in getting to know Heroku better, you can check out their Python guide. Some good things to know:
+
+You can run a command, typically scripts and applications that are part of your app, in a one-off dyno using the heroku run command.
+You can view a stream of your application logs with heroku logs --tail. Use Ctrl-c to exit.
+There are a ton of add-ons for Heroku that can help you manage your app: Heroku Add-ons.
+One of those add-ons is a free Postgres database, which will be helpful in any of your capstone projects that require a database. (There are a bunch of other databases available too.)
+If your app uses environment variables (for example, a DB_USER and DB_PASS in the SQL configuration), you can set the Heroku environment variables with heroku config:set VAR_NAME=value.
+Now that you're finished with your project, you should submit the Heroku link for your project.
+
+What is a Heroku dyno?
+A dyno is a virtual machine on Heroku that is responsible for running some task
+What is the procfile used for? How does this relate to 'heroku local'?
+The procfile specifies which command should be run to start a web dyno. The procfile tells 'heroku local' what to do.
+How do we tell Heroku what the dependencies for our application are?
+Save them in a requirements.txt file. You can do this by running pip freeze > requirements.txt, or by listing them one per line.
+Can you describe the workflow for deploying changes to an application on Heroku?
+Develop your code on a branch (call it some-branch), then run "git push heroku some-branch" when you're ready to deploy. The first time around, you'll need to run heroku create before pushing up to Heroku.
+How do you monitor the output of your application?
+You can look at the logs by running heroku logs.
+What does the heroku run command do? Can you think of reasons why you might use this command?
+heroku run allows you to run a command in a one off dyno. This can be helpful for debugging your Heroku environment or running one off tasks like a database migration or testing.
+
+
+
+
+
+
+
+
+
+

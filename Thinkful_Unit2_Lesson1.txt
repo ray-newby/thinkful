@@ -1,0 +1,599 @@
+Thinkful
+
+Unit 2
+
+
+Working with Databases
+
+ Estimated Time: 17-19 hours
+In this unit you'll store, update, and retrieve data in a PostgreSQL database. PostgreSQL (or simply Postgres) is a relational database. This means that data is represented by tables of columns and rows, similar to a spreadsheet. In order to talk to a Postgres database we use a language called SQL (structured query language). In the first lesson you will build an application to store snippets of code and text which you can later recall. In the process you'll write SQL statements and run them from the command line, and then run them from within Python itself.
+
+In the second lesson you'll practice interacting with a Postgres database using an ORM (object relational mapper) called SQLAlchemy. With SQLAlchemy, rather than writing raw SQL statements, you write Python classes to represent the tables, and create instances of the classes to represent the rows. These are then automatically transformed into SQL statements and executed. Along the way you'll be building the database layer for a simple auction site which will have surprising parallels to one of your unit 1 challenges.
+
+Goals
+
+Master basic SQL commands
+Use Python to interact with a PostgreSQL database
+Learn about ORMs and use SQLAlchemy to model problems and persist your data
+
+----------------------------------
+
+Unit 2 / Lesson 1
+
+Building a Snippets App
+
+ Estimated Time: 10-11 hours
+In this lesson, you are going to code a simple command line application that will allow you to store and retrieve snippets of text. The app will be useful for saving notes about Python as you work through this course. Along the way, you'll learn about working with databases, parsing arguments from the command line, and everything else you'll need in order to make this usable.
+
+At its heart, this app is an interface to the basic database operations. You'll be mapping keywords (used to name the snippets) to the text content of the snippets, and managing this mapping from the command line.
+
+Goals
+
+Master the use of a PostgreSQL database
+Become familiar with the argparse, logging, and psycopg2 modules
+
+----------------------------------
+
+Unit 2 / Lesson 1 / Assignment 1
+
+
+Build the App Skeleton
+
+ Estimated Time: 1 hour
+In this assignment you'll set up a skeleton for the snippets application which you'll build throughout this lesson.
+
+First, create a new folder for this project called 'snippets-app' and from the command line. cd into it. Do a git init to start version control, and go ahead and create a remote repository on Github to link this local repo to.
+
+Next you are going to introduce a new module: logging. This module will allow you to track what happens in the application, and will help you identify any problems in the code. Create a file called snippets.py and add the following code:
+
+import logging
+
+# Set the log output file, and the log level
+logging.basicConfig(filename="snippets.log", level=logging.DEBUG)
+The filename argument describes where you want the log to be saved. In this case, it will write to a file called "snippets.log" in the current directory. The level argument sets the log level. The logging module splits log messages into one of five severity levels:
+
+DEBUG: Detailed information, typically of interest only when diagnosing problems.
+INFO: Confirmation that things are working as expected.
+WARNING: An indication that something unexpected happened, or indicative of some problem in the near future (e.g. ‘disk space low’). The software is still working as expected.
+ERROR: Due to a more serious problem, the software has not been able to perform some function.
+CRITICAL: A serious error, indicating that the program itself may be unable to continue running.
+When you set the log level to DEBUG all of the messages will be logged. If it is set to WARNING only log messages with a severity of WARNING or higher will be logged.
+
+Creating a program skeleton
+
+Let's figure out what operations you'll need, and create stubs for each main function. A stub is a function that is defined but does nothing useful. The most important feature is storing a snippet. In your snippets.py file add the following stub:
+
+def put(name, snippet):
+    """
+    Store a snippet with an associated name.
+
+    Returns the name and the snippet
+    """
+    logging.error("FIXME: Unimplemented - put({!r}, {!r})".format(name, snippet))
+    return name, snippet
+When called, this function will report in the log exactly that the put feature doesn't exist yet. Using the well-recognized tag FIXME identifies the problem both in the source and the log. Formatting the strings with the !r modifier means that the repr() function will be run over the data to provide the output. (repr() returns a string containing a printable representation of an object.) This ensures that the log is clean and readable, no matter what string is provided. Add another stub:
+
+def get(name):
+    """Retrieve the snippet with a given name.
+
+    If there is no such snippet, return '404: Snippet Not Found'.
+
+    Returns the snippet.
+    """
+    logging.error("FIXME: Unimplemented - get({!r})".format(name))
+    return ""
+This is a good time to think about error conditions. What would be the right action for get() in the case where the snippet doesn't exist? In this example, we return a fixed string explaining the problem, but you might choose instead to return None, or raise an exception, or create some sort of auto-generated snippet, or anything else you like.
+
+Before moving on, add and commit your work so far.
+
+Trying it out
+
+You can try this out at the interactive interpreter, even though it's not very useful at the moment. Open up a terminal in the same directory as your snippets.py folder, and then open up the Python interpreter by typing python3 with no script name. You'll be greeted with interactive Python's distinctive prompt: >>>. Now try using your function to store and retrieve a snippet:
+
+>>> import snippets
+>>> snippets.put("list", "A sequence of things - created using []")
+>>> snippets.get("list")
+It may appear that nothing has happened, but have a look at the log file (snippets.log) and you should see something like this:
+
+ERROR:root:FIXME: Unimplemented - put('list', 'A sequence of things - created using []')
+ERROR:root:FIXME: Unimplemented - get('list')
+Add stubs for whatever other functions you think will be necessary, and again discuss this with your mentor.
+
+----------------------------------
+
+Unit 2 / Lesson 1 / Assignment 2
+
+
+Create an argparse interface
+
+ Estimated Time: 1-2 hours
+So far you have seen how to make simple command line interfaces for applications using input() and sys.argv to obtain command line arguments. When you want to build more complex interfaces (think of the myriad options you can pass to the git command, for example), using sys.argv quickly becomes clunky.
+
+In this assignment you will learn about a nicer way to handle more complex interfaces using the argparse module, using it to build the interface to our command line code snippets app.
+
+Planning the interface
+
+To create a command line interface you first need to decide how you want it to look. The put function takes two arguments, so it makes sense to allow two command line arguments. Since you want to retrieve and set snippets, it also makes sense to add an initial argument specifying the command type (storage or retrieval). Next, you'll sketch out a few ways you can use the app.
+
+# Store an item using fully qualified names
+python3 snippets.py --type "put" --name "list" --snippet "A sequence of things - created using []"
+
+# Store an item using abbreviations
+python3 snippets.py -t "put" -n "list" -s "A sequence of things - created using []"
+
+# Use positional rather than optional arguments
+python3 snippets.py put list "A sequence of things - created using []"
+The options above demonstrate the two type of arguments which argparse can handle. The first two examples use option arguments. These are arguments which can be provided in any order. So for example we could supply the snippet, then the type, then the name. The third example uses positional arguments. Here the positions are fixed, so the arguments have to be provided in a set order.
+
+Each option presented above has advantages and disadvantages. For an app as simple as this, using optional arguments everywhere is too verbose, even when abbreviated. For this assignment the last option is ideal syntax.
+
+Now that you have settled on an interface, you'll start to build the parser using the argparse module. Place this into a new main() function in snippets.py. This will ensure that the function only executes when you run the module as a program, and will not execute when the module is imported.
+
+def main():
+    """Main function"""
+    logging.info("Constructing parser")
+    parser = argparse.ArgumentParser(description="Store and retrieve snippets of text")
+    arguments = parser.parse_args()
+
+if __name__ == "__main__":
+    main()
+Here you create an instance of the ArgumentParser object from the argparse module. Note that you will need to add import argparse at the top of your script to access this object. You will use this object to describe your interface and parse the list of arguments (i.e. to split it up according to the interface you have described).
+
+Next you'll call the parse_args method of the parser, letting it locate the arguments automatically. As you learned in Unit 1, the first argument of sys.argv contains the name of our program; argparse is smart enough to know not to parse that as an argument, but to use it if it needs to print out usage help.
+
+The parse_args function takes the list of arguments (for example put list "A sequence of things - created using []"), and splits them into named variables. These variables can be accessed using the arguments object, for instance, we can create the variables arguments.name and arguments.snippet.
+
+By this point you have added a main block to the app that calls our main function. This means that you can try running our script from the command line. Open up a terminal, navigate to your project folder, and enter python3 snippets.py --help. You should see some help text the parser object automatically generated.
+
+Before moving on, be sure to commit your changes.
+
+Making the interface accept arguments
+
+Now that you have a parser you can start building up the interface. As a first step you're going to split the parser into subparsers – one for the storage command and one for the retrieval command. This is similar to how apps like git work, with different commands taking different arguments.
+
+def main():
+    """Main function"""
+    logging.info("Constructing parser")
+    parser = argparse.ArgumentParser(description="Store and retrieve snippets of text")
+
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # Subparser for the put command
+    logging.debug("Constructing put subparser")
+    put_parser = subparsers.add_parser("put", help="Store a snippet")
+
+    arguments = parser.parse_args()
+Here you're using the add_subparsers method of the parser to add multiple subparsers. Then you're using the add_parser method of the subparsers object to create the new subparser. This subparser works in the same way as a standard ArgumentParser instance, allowing you to add arguments. You set the dest argument to the string "command". This will allow you to access the command name (for example "put" or "get") through the arguments.command variable. Next, try to expand our function even further to add in the arguments for a put command:
+
+def main():
+    """Main function"""
+    logging.info("Constructing parser")
+    parser = argparse.ArgumentParser(description="Store and retrieve snippets of text")
+
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # Subparser for the put command
+    logging.debug("Constructing put subparser")
+    put_parser = subparsers.add_parser("put", help="Store a snippet")
+    put_parser.add_argument("name", help="Name of the snippet")
+    put_parser.add_argument("snippet", help="Snippet text")
+
+    arguments = parser.parse_args()
+Here you'll use the add_argument method to add the two positional arguments. Each one has its own explanatory text, which you'll see in a moment.
+
+Now try it out. In a terminal, run the program a few different ways to check that the parser works:
+
+# Shows the help for which subcommands are available
+python3 snippets.py --help
+
+# Show the help for the put subcommand
+python3 snippets.py put --help
+
+# Standard put command
+python3 snippets.py put list "A sequence of things - created using []"
+
+# Put command missing an argument (this should fail)
+python3 snippets.py put list
+You've reached another milestone, so be sure to commit these changes.
+
+Argument parsing challenge
+
+Create the get subparser for your program. This should be similar to the put subparser, except that it will only take one argument – the name of the snippet.
+
+Finishing touches
+
+Now that you have both the functionality and interface, all that remains is to join the two together. Extend the main function:
+
+def main():
+
+    ...
+
+    arguments = parser.parse_args()
+    # Convert parsed arguments from Namespace to dictionary
+    arguments = vars(arguments)
+    command = arguments.pop("command")
+
+    if command == "put":
+        name, snippet = put(**arguments)
+        print("Stored {!r} as {!r}".format(snippet, name))
+    elif command == "get":
+        snippet = get(**arguments)
+        print("Retrieved snippet: {!r}".format(snippet))
+There are a few things which might be new to you in this code. Firstly, you're using the built in vars function to convert the Namespace object returned by parse_args into a dictionary. This is purely for convenience, as the dictionary object is somewhat easier to work with.
+
+Next, you'll see the pop method of the dictionary. This removes and returns the command item which you added earlier to distinguish between the two commands.
+
+You then call the put or get functions, using **arguments as an argument. Using the double-star operator in this context is known as unpacking. It converts the key-value pairs in the dictionary into keyword arguments to the function. For example:
+
+# Code without argument unpacking
+put(name="list", snippet="A sequence of things - created using []")
+
+# Identical code which uses argument unpacking
+arguments = {
+    "name": "list",
+    "snippet": "A sequence of things - created using []"
+}
+put(**arguments)
+Try running your app and using it to try to add and retrieve items. Open up the log to make sure that the FIXME lines are being shown. If so, congratulations – that's the first part of the app finished.
+
+Don't forget to commit your changes into git with an appropriate message, for example: git commit -m 'Add parser structure'.
+
+----------------------------------
+
+Unit 2 / Lesson 1 / Assignment 3
+
+
+Meet PostgreSQL
+
+ Estimated Time: 2-3 hours
+In this assignment you'll set up a PostgreSQL database to store snippets. Postgres is a high performance database engine, and in recent years has become the go-to database choice for a wide range of applications.
+
+A Postgres database is made up of various different elements. The database contains any number of tables and the tables contain rows of data. Each table has a schema which describes what fields (i.e. columns) the data should contain.
+
+To give a concrete example, think of a user management system. The database would have a table to hold users. The table would have a schema describing what fields a user should have – for example, a name, an email address and a password. Each user would be represented by a row in the database – for example, Alice would be the first row, and Bob would be the second row.
+
+Setting up Postgres
+
+Setting up the Postgres database on Cloud9 is a little complicated, Follow these instructions carefully, and you'll be good to go. And, of course, if you have any problems, ask your mentor for help.
+
+Cloud9 comes with Postgres installed, so all we need to do is configure it and start the Postgres server. To do so, we need to learn about another command, sudo.
+
+sudo is an abbreviation for " s et u ser and do". This allows you to run a command as if you were a different user. By default this is as the superuser, or system admin. Normally, the sudo command is restricted to trusted admin users, but this workspace is all yours - you can do anything with it (including break it, so take special care when running a command using as a superuser).
+
+Step One: Start the Postgres server
+First you need to start the Postgres server. Remember this command - any time you get connection errors talking about port 5432, run this again:
+
+$ sudo service postgresql start
+ * Starting PostgreSQL 9.3 database server
+   ...done.
+In this command, we're using a system administration command service to configure a service, which is named postgresql. In this case, we give it the start command, which starts the Postgres service. In the future, you may want to stop the Postgres service, so you would use the command stop in place of start. If you want to stop the service and then immediately start it again then the command is restart.
+
+Step Two: Create your own user
+Postgres, by default, doesn't allow the superuser to run the command-line tool (so the superuser isn't so super after all). Instead, it creates a special user named postgres.
+
+It would be fairly tedious if you had to switch to the postgres user every time you wanted to work with your database. So the next step is to create a user which matches your default user.
+
+To do this you can use the createuser command. Enter the command, and select the following options:
+
+$ sudo sudo -u postgres createuser ubuntu --interactive
+Shall the new role be a superuser? (y/n) n
+Shall the new role be allowed to create databases? (y/n) y
+Shall the new role be allowed to create more new roles? (y/n) n
+"Wait!" you say, "isn't the sudo repeated?" And yes, it is. Here's what is happening. The sudo command, by default, runs the command to its right as the superuser, or system admin:
+
+$ sudo run the command here
+Adding the -u flag to sudo says "set user to the named user and do'. So the following command says become the superuser, then become the postgres user, and finally run the command:
+
+$ sudo sudo -u postgres run the command here
+Here you switch to work as the postgres user (sudo sudo -u postgres), and run the createuser command. The first argument is the username which you want to use. In this case we use ubuntu, the default username on Cloud9. Finally you pass the --interactive switch so Postgres asks you for details about which capabilities the user should have.
+
+Each user needs a database associated with it, so create that now:
+
+$ createdb ubuntu
+Try it!
+If all has gone well, you can simply type the psql command and get directly into the postgres command prompt.
+
+$ psql
+psql (9.3.7)
+Type "help" for help.
+
+ubuntu=#
+Notice that you don't need to run sudo sudo -u postgres any more - your user now has access to the database.
+
+Run the \password command to give your user a password, then exit psql:
+
+ubuntu=> \password
+Enter new password: (type in "thinkful" as the password)
+Enter it again: (type in "thinkful" again)
+ubuntu=> \q
+The commands starting with a backslash are specific to Postgres. \password is used to change the user's password, and \q is used to exit the command prompt.
+
+The last stage of setup is to create the new database for the app. To create a database called snippets:
+
+$ createdb snippets
+Creating the table
+
+Now that you have the database set up you'll start putting it to good use. A Postgres database is controlled using a commands written in a language called SQL. To get started create a file in your project directory called schema.sql - we'll build up the table definitions here.
+
+The first table you'll need will contain the actual snippets. Each one will be identified by a case sensitive keyword, which will form a natural key, and will carry a text message. Add the following to your schema.sql file:
+
+create table snippets (
+keyword text primary key,
+message text not null default ''
+);
+There's quite a lot to take in here, so let's break it down line-by-line:
+
+create table snippets (
+Here you are issuing a create table command. You are telling the database that the table should be called snippets.
+
+keyword text primary key,
+This defines the first field in your table. The first part is the name of the field – in this case keyword. Next you tell the database what type of data the field should contain – in this case text. Postgres has data types which are similar to Python's. The big difference is that we have to declare what type of data a field will hold in advance. text holds a varying length sequence of characters, similar to a Python string. To see a description of all of the data types that you can use for a Postgres field take a look at this table.
+
+The final part says that the field should be the primary key for the table. This is known as a constraint because it constrains the values which the field can hold. The primary key constraint ensures that any values in the field are not NULL, and are unique (i.e. there are no other rows which have the same primary key). You can always identify an individual row by its primary key.
+
+message text not null default ''
+Here you are creating the final field: a text field called message. The field has two constraints placed upon its values. The first, not null, says that the field cannot hold a NULL value. The second, default '' says that if no value is provided for the field it should default to an empty string. Note that Postgres differentiates between single and double quotes, so it is best to stick to single quoting strings.
+
+Now that you know what's happening, try running the schema.sql script to create the table. In the terminal run:
+
+$ psql -d snippets < schema.sql
+This tells Postgres to run the schema.sql file on the snippets database.
+
+To check that it worked, open up the interactive Postgres interpreter by saying psql -d snippets. Then enter the following:
+
+snippets=> \d+ snippets
+                              Table "public.snippets"
+ Column  | Type |         Modifiers         | Storage  | Stats target | Description
+---------+------+---------------------------+----------+--------------+-------------
+ keyword | text | not null                  | extended |              |
+ message | text | not null default ''::text | extended |              |
+Indexes:
+    "snippets_pkey" PRIMARY KEY, btree (keyword)
+Has OIDs: no
+The \d+ command is used to get information about a table. Here you can see that you successfully create the snippets table with two columns. You can then enter \q to exit the interpreter.
+
+Creating rows
+
+Of course, a table isn't much use on its own, so you'll add some rows to it. To do this, use the insert into command. Open up the psql interpreter again, and enter the following:
+
+insert into snippets values ('insert', 'Add new rows to a table');
+Here you've told Postgres to insert a new row into the snippets table. You've supplied two values, which will be entered in order into the columns. So the string 'insert' will be entered into the keyword, the first column, and the string 'Add new rows to a table' will be added to message, the second column.
+
+You can also manually describe which value will be inserted into each column. For example the following SQL statement is equivalent to the one above:
+
+insert into snippets (message, keyword) values ('Add new rows to a table', 'insert');
+Try it!
+Use the insert into command to add two more snippets to your table.
+Try adding a snippet with the same keyword as one of your other snippets. What do you see?
+Querying for rows
+
+The database would not be very useful if we could add rows, and not retrieve them. To query the database, use the select statement. Try running the following examples:
+
+select * from snippets;
+select message from snippets;
+select keyword, message from snippets where keyword='insert';
+In the first example we ask Postgres to query for all of the fields (*) in the snippets table. You should see the insert row plus the extra rows which you added.
+
+The second example is more explicit. Rather than asking for all columns it only asks for the messages column. In general it is better practice to explicitly ask for columns rather than use the * wildcard so you are only fetching the information you need.
+
+The final example narrows down the query using a where clause. So here you're requesting the specific row where the keyword is insert.
+
+Try it!
+Write queries to find:
+
+All of the keywords
+The entire row for one of your own snippets
+Updating rows
+
+To change the values held in a row we can use the update command. For example:
+
+update snippets set message='Insert new rows into a table' where keyword='insert';
+Here you're asking Postgres to update the snippets table, setting a new value in the message field. To ensure that you only target one row, you'll use a where clause to find the specific row you want to update.
+
+Try it!
+Update the message of another snippet.
+Update the keyword of one of your snippets. Changing the value of the primary key is unusual, but perfectly legal!
+Deleting rows
+
+The final part of this whistle-stop tour of SQL is deleting rows using the delete from command. For example:
+
+delete from snippets where keyword='insert';
+You tell Postgres to delete from the snippets table, selecting a single row using the where clause.
+
+Try it!
+Create a new snippet, then delete it from your table. Make a query to ensure you deleted the snippet successfully.
+
+Congratulations! You have a fully working table set up to hold the snippets. Next up: Accessing the table from Python!
+
+----------------------------------
+
+Unit 2 / Lesson 1 / Assignment 4
+
+
+Putting the pieces together
+
+ Estimated Time: 2-3 hours
+To access PostgreSQL from Python you'll need the psycopg2 module. To install it run the following command:
+
+sudo python3 -m pip install psycopg2
+At the top of your snippets.py, add import psycopg2 to make it available to the script. Then, after initializing logging, add the following lines to connect to the database from Python:
+
+logging.debug("Connecting to PostgreSQL")
+connection = psycopg2.connect(database="snippets")
+logging.debug("Database connection established.")
+Fleshing out the stubs
+
+Now that you are connected to the database it's finally time to replace the FIXME stubs with something functional! You currently have this:
+
+def put(name, snippet):
+    """Store a snippet with an associated name."""
+    logging.error("FIXME: Unimplemented - put({!r}, {!r})".format(name, snippet))
+Update this code to run an insert into statement on the database and store a new snippet:
+
+def put(name, snippet):
+    """Store a snippet with an associated name."""
+    logging.info("Storing snippet {!r}: {!r}".format(name, snippet))
+    cursor = connection.cursor()
+    command = "insert into snippets values (%s, %s)"
+    cursor.execute(command, (name, snippet))
+    connection.commit()
+    logging.debug("Snippet stored successfully.")
+    return name, snippet
+First, you're creating a cursor object by calling the connection.cursor method. Cursors allow us to run SQL commands in the Postgres session. Next, you're constructing a string which contains the insert into statement, with two placeholders for the keyword and message indicated by %s. Then you're running the command on the database using the cursor.execute method, substituting in the snippet keyword and message by passing them as a tuple. Finally, you save changes to the database using the connection.commit function.
+
+Try adding a new snippet using your put command by running python3 snippets.py put Test "This is a test snippet". Take a look at the log. You should see that the snippet is being stored successfully. Then run a query on your database to make sure that it has been stored.
+
+Get Challenge
+Try to implement the get() function. It should:
+
+Construct a select statement to retrieve the snippet with a given keyword
+Run the statement on the database
+Fetch the corresponding row from the database
+Return the message from the row
+Hint - To fetch the row you can call the cursor.fetchone method after executing your select statement. This returns a tuple of values for each field. For the moment you can assume that a snippet will always be correctly selected. You will be dealing with what happens when you try to select a non-existent snippet in the next assignment.
+
+Hint - When you execute an SQL statement, the parameters must always be packaged up into a tuple. This requires a comma: (word,) not just (word).
+
+When you have completed the challenge you should be able to store new snippets, and retrieve the stored information. At the moment, your code won't cope well with problems, but you'll get to that in the next assignment.
+
+Before moving on, remember to commit your work to source control.
+
+----------------------------------
+
+Unit 2 / Lesson 1 / Assignment 5
+
+
+Improve the Error Handling
+
+ Estimated Time: 1-2 hours
+By this point you can retrieve a snippet that exists. If the snippet doesn't exist you are probably getting an ugly traceback. Although this is an obvious indication to a user that something has gone wrong, it's hardly courteous. Let's see what we can do about that.
+
+Your code for fetch a row probably looks something like the following:
+
+row = cursor.fetchone()
+connection.commit()
+return row[0]
+When you use this code to retrieve something that doesn't exist, you will get an error, something like this:
+
+Traceback (most recent call last):
+  File "snippets.py", line 60, in <module>
+    main()
+  File "snippets.py", line 56, in main
+    snippet = get(**arguments)
+  File "snippets.py", line 30, in get
+    return row[0]
+TypeError: 'NoneType' object is not subscriptable
+This is a traceback. It is the Python interpreter's way of being incredibly helpful in the face of something it isn't sure how to deal with. If you have trouble with a Python program and want to ask for help, be sure to copy and paste the entire text from the word "Traceback" down to the error message at the end; experienced programmers on newsgroups and mailing lists (or, of course, your mentor!) will be far better able to advise you.
+
+In this case, you can go straight to the appropriate line (it might not be line 30 in your program) and see that it's trying to examine index 0 of a 'NoneType' object. There's only one NoneType object, and it's called None; so you can correctly conclude that row is None, instead of being a tuple. This is what fetchone() returns if no row exists.
+
+Just before the return row[0] line, add this:
+
+    if not row:
+        # No snippet was found with that name.
+        return "404: Snippet Not Found"
+What should be done when an error happens? Take a look back at your docstring. Are you still happy with what you decided earlier? Should you return None? Should you raise an error? Should you freeze the user's computer, phone the police, and report that an illegal action was performed? Test it out, make sure the program does what you expect it to, and commit that to source control.
+
+Coping with duplicates
+
+There's a similar issue when you put a snippet: if it already exists, you get back an ugly error. Once again, this gives you a full traceback – something like this:
+
+Traceback (most recent call last):
+  File "snippets.py", line 60, in <module>
+    main()
+  File "snippets.py", line 54, in main
+    put(**arguments)
+  File "snippets.py", line 14, in put
+    cursor.execute("insert into snippets values (%s, %s)", (name, snippet))
+psycopg2.IntegrityError: duplicate key value violates unique constraint "snippets_pkey"
+DETAIL:  Key (keyword)=(asdf) already exists.
+In this case, the error is raised right in the cursor.execute() call, so the way to handle this is with try and except. Replace that line with this block:
+
+    try:
+        command = "insert into snippets values (%s, %s)"
+        cursor.execute(command, (name, snippet))
+    except psycopg2.IntegrityError as e:
+        connection.rollback()
+        command = "update snippets set message=%s where keyword=%s"
+        cursor.execute(command, (snippet, name))
+The obvious solution to this situation is to overwrite instead of inserting. The cursor.rollback method basically acts as an undo function to get the database back to its original state. Once that's done, you can construct the update command and use it to overwrite the snippet.
+
+This solution works beautifully in the simple case you're working with here, although it has unsolvably difficult problems in large systems. If you're curious, it's usually called a MERGE or UPSERT (for UPdate/inSERT) operation.
+
+Commit this version of the code, and then try to break your own program. Is there anything else that can go wrong? What happens? Should your program cope with those issues, or is a traceback fine?
+
+Now that you've identified and made a first attempt at fixing these errors it's time to take a look at a more excellent way of handling Postgres errors.
+Using a cursor as a context manager
+
+So far, you've explicitly committed or rolled back anywhere you use the database. This makes it all too easy to forget to roll back, accidentally commit too much, or end the program without committing. This is likely to cause you some unpleasant debugging headaches. The psycopg2 module gives us an easier way to handle cursors. In your get() function, replace these lines:
+
+    cursor = connection.cursor()
+    cursor.execute("select message from snippets where keyword=%s", (name,))
+    row = cursor.fetchone()
+    connection.commit()
+With these:
+
+    with connection, connection.cursor() as cursor:
+        cursor.execute("select message from snippets where keyword=%s", (name,))
+        row = cursor.fetchone()
+Aside from being one line shorter and one indentation level deeper, what's the difference? Simply this: At the backtab after the with block, the transaction is guaranteed to be either committed (if everything seemed to work) or rolled back (if an exception was thrown).
+
+The cursor object is what is known as a context manager. When context managers are used in a with block they automatically perform some cleanup actions when the block is exited.
+
+Try it!
+Refactor your put method to use context managers to commit or rollback changes to the database. This should be an internal change with no visible effect on the program's running.
+Test your code again and make sure it's still doing the right thing in all cases.
+Don't forget to commit to source control.
+
+----------------------------------
+
+Unit 2 / Lesson 1 / Assignment 6
+
+
+Extending the functionality
+
+ Estimated Time: 2-3 hours
+At this point, you have a usable application but there's no end of features you might want to add. In this assignment you can add some functionality of your own to the app. The exact details of code changes are up to you – there'll be hints, but not actual lines of code.
+
+Snippet catalog
+
+You can currently retrieve snippets only if you know their keywords. How do you know what keywords you can look up? You'll need to create a new argparse subparser, taking no parameters. Then in the catalog() function, you'll need to query the keywords from the snippets table
+
+Hints and tips:
+To return more than one row from a query in psycopg2 you can use the cursor.fetchall() method. This returns a list of tuples.
+To find the keywords in order you can use the order by clause. For example the following query would find the rows in order of the value stored in the age column: select * from table order by age.
+Providing a search facility
+
+Somewhere between catalog() and get() is a means of listing snippets which contain a given string anywhere in their messages. Try adding functionality which will allow you to search for a string within the snippet messages.
+
+Hints and tips:
+To perform a search query you can use the SQL like operator. For example the following select query would find any row which has a prescription column containing the word cowbell: select * from table where prescription like '%cowbell%'.
+Extra challenge
+
+Hidden snippets
+Maybe you don't want all your snippets to be visible in the catalog. Create a column hidden boolean not null default false and have the catalog and search functions filter their results with where not hidden. You can then add optional arguments to the put subcommand such as --hide, which will set the hidden flag, and one of --show, --unhide, --no-hide, or --hide=0, which will reset it. (If neither flag is set, leave the hidden flag as it was.)
+
+Hints and Tips
+To add optional arguments you will need to learn some new parts of the argparse module. Take a look at the argparse tutorial if you are in need of guidance.
+
+To add a column to the table you will need to change the table schema. The alter table command will be your friend here - look it up if you are unfamiliar with how it works.
+
+Anything else!
+There are infinite possibilities here. Maybe this will grow into a utility you spend a lot of time maintaining! A program is never finished, but there comes a time when you need to move on and start another project.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

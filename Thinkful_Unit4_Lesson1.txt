@@ -1,0 +1,677 @@
+Thinkful
+
+Unit 3
+
+
+Flask as an API & Course Capstone
+
+ Estimated Time: 26-30 hours
+In the previous unit, you learned how to use Flask to create "traditional" server side applications where the server sends fully baked HTML back to the browser. In this unit, we'll learn how to use Flask to create APIs, which you can use to support single page web apps, which is the new trend in web app architecture.
+
+The first two lessons of this unit are dedicated to writing APIs with Flask. In the third and final lesson, you'll design and code an application of your choosing, from the ground up. We'll provide some guidelines, but it will be up to you, in dialogue with your mentor, to define your application.
+
+Goals
+
+Learn how to use Flask to write APIs and serve static files
+Complete a capstone project that demonstrates your mastery of the skills taught in this course.
+
+
+----------------------------------
+
+Unit 4 / Lesson 1
+
+
+Building APIs with Flask
+
+ Estimated Time: 7-8 hours
+In this lesson, you'll learn how to build an API with Flask. We'll use a test-first approach to build a simple blog application.
+
+Goals
+
+Know how to build APIs with Flask.
+Understand how to test API endpoints.
+
+
+----------------------------------
+
+Unit 4 / Lesson 1 / Assignment 1
+
+
+Introduction to APIs and Single Page Apps
+
+ Estimated Time: 1 hour
+In this Unit, you'll use Python and Flask to build APIs which are accessible from client side code. This style of web application is called a single-page app, or SPA. In fact, you are currently using an SPA – the Thinkful curriculum app.
+
+How do SPAs work?
+
+In the previous unit the apps you made construct entire HTML pages on the server-side. These pages are then sent to the client in a single response for the client to render. When you visit a new page, a whole new HTML page is generated and rendered.
+
+Perhaps you can start to spot some unnecessary overhead in this process. For example, when you visit a new page your header should probably stay the same. So why are we bothering to regenerate, and re-render it? SPAs try to eliminate this overhead by sending requests for new content (or changes to existing content) in the background, and then only updating the relevant part of the page. These background requests are made in JavaScript, and are commonly known as AJAX requests.
+
+SPAs provide a number of advantages:
+
+SPAs load and render less content, so feel faster and more responsive
+Whole pages aren't refreshed to load new content, so the user experience is smoother
+The server has a lower workload - this means cheaper bills!
+How do APIs work?
+
+Most SPAs are built on top of an API. An API is simply a group of URLs (known as endpoints), which are used to manage an app's content. Rather than returning HTML, the server-side of your app will return some form of structured data. Notice how the role of the server is getting smaller and smaller - first you aren't returning whole HTML pages, and now we aren't returning HTML at all!
+
+So how does this data get turned into something which you can view in your browser? This is where the front-end takes over, taking the data and running it through a templating engine similar to Jinja. The whole process looks something like this:
+
+You visit your app, which returns a single static HTML page, and (generally quite a lot of) JavaScript
+The front-end makes AJAX requests to the server to ask for the state of the app
+The server responds with structured data describing the state of the app
+The front-end takes this data and converts it into HTML
+The new HTML is inserted into the static HTML page
+You can now see what is going on!
+A similar process takes place when you interact with an SPA - a new request is sent to the back-end describing the change you are trying to make, and the server responds with data describing the new structure.
+
+Exercise
+
+Try looking through the top 10 websites which you visit most frequently. See if you can identify any single-page apps amongst them. Can you identify any reasons why the sites have been chosen to work in that way? Are there any problems with the approach?
+
+How does a Single Page Application (SPA) work?
+You serve a single HTML page to the end user, and the user never navigates away from this page for the duration of their visit to the application. The HTML page makes AJAX calls to API endpoints on your server to generate dynamic content based on user actions.
+What are some of the advantages of SPAs?
+Fewer round trip calls to the server, and therefore more performant apps. Backend can support multiple UXs with the same endpoints. Emulate "native app" feel.
+
+
+----------------------------------
+
+Unit 4 / Lesson 1 / Assignment 2
+
+
+Writing your first endpoints
+
+ Estimated Time: 2-3 hours
+Over the next three assignments you'll create a simple publishing API which lets you store and retrieve posts. It could be used as the basis for a blog, CRM, or eBook.
+
+You'll start by writing endpoints (URLs designed so you can access and modify data) to retrieve either a list of all of the posts, or a single post.
+
+In the Blogful project we spent quite a lot of time setting up boilerplate code which you'll need for every Flask project. Because you know this code fairly well already you can go ahead and clone it from this repository that already contains the boilerplate. You'll use this as a basis for the API. Be sure to take a look through the code to double check that you are familiar with how it is works. To get started on this project:
+
+Clone the starter repository (git clone https://github.com/oampo/pip-posts-project-template posts)
+Move into the project's directory (cd posts)
+Set up a virtualenv for the project (python3 -m venv env)
+Activate the virtualenv (source env/bin/activate)
+Install the project's dependencies (pip install -r requirements.txt)
+Set up a database (createdb posts)
+Set up a test database (createdb posts-test)
+Writing API Endpoints Test first
+
+The first endpoint you're going to work on will return a list of posts in the JSON format. JSON is a serialization format that allows you to encode and decode data easily in pretty much any programming language. It has become a kind of lingua-franca of the web, and you will find that most APIs work with JSON encoded data.
+
+For this project, you'll use the test first approach. In the tests/api_tests.py file there is a test fixture already set up. Add a test to this that ensures:
+
+A request to your endpoint is successful
+The endpoint is returning JSON as expected
+The endpoint returns an empty list, as you have no posts
+The test should look something like this:
+
+def test_get_empty_posts(self):
+    """ Getting posts from an empty database """
+    response = self.client.get("/api/posts")
+
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(response.mimetype, "application/json")
+
+    data = json.loads(response.data.decode("ascii"))
+    self.assertEqual(data, [])
+In this project, you'll be using Nose which is a framework that wraps Python's built in UnitTest framework. One of Nose's key features is auto-discovery of your test suites, meaning you only need to point it to a single parent directory, and it will find and run all of the tests within that directory and any children. You'll use the nosetests command to run your tests, but Nose won't change how you write the actual tests. Nose is listed as one of the requirements for this app in requirements.txt.
+
+Add this test to the TestAPI class, and try running it using nosetests tests. Notice how you don't need to set the PYTHONPATH environment variable – Nose takes care of setting this for you. The test should fail at the first assertion; this is what we would expect as you haven't written the endpoint yet.
+
+There are a few things to notice here:
+
+You are using the test client to make a GET request to /api/posts. This should give you a clue about what the endpoint route will look like.
+You're checking that the status returned by our endpoint is 200 OK. This means that your request has worked correctly.
+You're checking that the endpoint has returned JSON by looking at the response mimetype. This should give you another hint about something you might need in your endpoint.
+You're decoding the response data, first converting the bytes into text according to the ASCII standard, then using json.loads. Internet protocols transmit and receive bytes, but JSON is a textual standard; even though it may seem obvious to a human, the text string "Hello" is very different from the byte string b"\x48\x65\x6c\x6c\x6f".
+You're checking that the JSON contains an empty list.
+Making it pass
+Now that you have your test in place, try to make it pass. The first thing to do is to set up a route in the posts/api.py file. This should look something like:
+
+@app.route("/api/posts", methods=["GET"])
+def posts_get():
+    """ Get a list of posts """
+    pass
+Notice how you're using the methods parameter to specify that this endpoint will only handle GET requests.
+
+Now add a body to your function which will return the empty list as JSON:
+
+@app.route("/api/posts", methods=["GET"])
+def posts_get():
+    """ Get a list of posts """
+    data = json.dumps([])
+    return Response(data, 200, mimetype="application/json")
+Here you manually construct a Response object which returns:
+
+An empty list encoded as JSON using json.dumps.
+A status of 200 OK.
+The correct mimetype for JSON.
+Try running the test again (nosetests tests). Hopefully it will pass this time. If so, congratulations – you've just written your first API endpoint!
+
+Adding a model
+Now you know the basics of constructing an endpoint, so let's expand the code to make it work with some actual data. The first step is to create a SQLAlchemy model to represent your posts. To keep things simple you'll limit the model to three fields: an id, the post title, and some body text.
+
+The posts/database.py already contains the setup code for a database connection, so all you need to do is add the following to your posts/models.py file:
+
+class Post(Base):
+    __tablename__ = "posts"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String(128))
+    body = Column(String(1024))
+This should all look pretty familiar to you. If not have a quick look back over the material on SQLAlchemy from earlier in the course.
+
+At this stage you can add one final piece of code which will come in handy shortly. To allow you to easily convert your SQLAlchemy model into JSON, you'll add an as_dictionary method to the Post class, which will return the post's data as a Python dictionary. This should look something like:
+
+    def as_dictionary(self):
+        post = {
+            "id": self.id,
+            "title": self.title,
+            "body": self.body
+        }
+        return post
+A trickier test
+Now that your model is in place, make a new test which adds a couple of posts and makes sure that your endpoint returns them correctly.
+
+First, create the test in tests/api_tests.py and add code to create the posts:
+
+    def test_get_posts(self):
+        """ Getting posts from a populated database """
+        postA = models.Post(title="Example Post A", body="Just a test")
+        postB = models.Post(title="Example Post B", body="Still a test")
+
+        session.add_all([postA, postB])
+        session.commit()
+Then you can copy the request and assertions from test_empty_posts into your new test, changing the code so that it checks that the posts are returned correctly:
+
+        response = self.client.get("/api/posts")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "application/json")
+
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(len(data), 2)
+
+        postA = data[0]
+        self.assertEqual(postA["title"], "Example Post A")
+        self.assertEqual(postA["body"], "Just a test")
+
+        postB = data[1]
+        self.assertEqual(postB["title"], "Example Post B")
+        self.assertEqual(postB["body"], "Still a test")
+Try running the tests again. This new test should make it past where you check the status and mimetype of the response. It should only fail when you start to check that the correct data was returned.
+
+Returning data
+Next, try to update your endpoint so that it passes this more complex test. In order to make the test pass your endpoint needs to:
+
+Query the database for all of the posts
+Convert the list of posts to JSON
+Return this list in your response
+The modified endpoint should look something like this:
+
+@app.route("/api/posts", methods=["GET"])
+def posts_get():
+    """ Get a list of posts """
+
+    # Get the posts from the database
+    posts = session.query(models.Post).order_by(models.Post.id)
+
+    # Convert the posts to JSON and return a response
+    data = json.dumps([post.as_dictionary() for post in posts])
+    return Response(data, 200, mimetype="application/json")
+Here you use a list comprehension to create a list of dictionaries containing the data for the posts. List comprehensions provide a simple way to create populated lists from another iterable object. So this code:
+
+post_dictionaries = [post.as_dictionary() for post in posts]
+Is equivalent to this:
+
+post_dictionaries = []
+for post in posts:
+    post_dictionaries.append(post.as_dictionary())
+You may be wondering why you don't just call json.dumps(posts) to encode your posts as JSON. Unfortunately this will not work because the json module does not know how to serialize SQLAlchemy models. The solution is to convert your data to Python dictionaries, which the json module is happy to serialize.
+
+Try running the tests again. Hopefully the second test will now pass, showing that you can retrieve a list of posts from your API.
+
+GETting a single post
+Now let's look at the endpoint for retrieving a single post. First of all you can add a couple of tests: one for when you request a post that exists, and a second for requesting a non-existent post.
+
+    def test_get_post(self):
+        """ Getting a single post from a populated database """
+        postA = models.Post(title="Example Post A", body="Just a test")
+        postB = models.Post(title="Example Post B", body="Still a test")
+
+        session.add_all([postA, postB])
+        session.commit()
+
+        response = self.client.get("/api/posts/{}".format(postB.id))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "application/json")
+
+        post = json.loads(response.data.decode("ascii"))
+        self.assertEqual(post["title"], "Example Post B")
+        self.assertEqual(post["body"], "Still a test")
+
+    def test_get_non_existent_post(self):
+        """ Getting a single post which doesn't exist """
+        response = self.client.get("/api/posts/1")
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.mimetype, "application/json")
+
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["message"], "Could not find post with id 1")
+The test_get_post method should look very familiar as it is almost identical to the test_get_posts method you wrote earlier. The one thing to note here is the format of the route: you're accessing the post at /api/posts/<id>.
+
+The test for a non-existent post is more interesting. When a post doesn't exist, check that a 404 Not Found status is returned. Also look for a JSON encoded message in the response body with the following format:
+
+{
+    "message": "A description of the error message"
+}
+This is a common pattern for returning errors in an API. The message is often accompanied by a more detailed error code and a link to documentation describing how the problem can be resolved.
+
+With your tests written you can try to create the endpoint:
+
+@app.route("/api/posts/<int:id>", methods=["GET"])
+def post_get(id):
+    """ Single post endpoint """
+    # Get the post from the database
+    post = session.query(models.Post).get(id)
+
+    # Check whether the post exists
+    # If not return a 404 with a helpful message
+    if not post:
+        message = "Could not find post with id {}".format(id)
+        data = json.dumps({"message": message})
+        return Response(data, 404, mimetype="application/json")
+
+    # Return the post as JSON
+    data = json.dumps(post.as_dictionary())
+    return Response(data, 200, mimetype="application/json")
+Here you're running a query against your database to find the post with the correct ID. If the post doesn't exist then you construct your error message and return it with a 404 status. If the post exists, you convert it to JSON and return it with a 200 status.
+
+Try running the tests one more time to make sure your new endpoint is working correctly.
+
+Good behavior
+By this point you have a great API which allows you to retrieve both individual posts and a complete list of all of the posts. But before moving on, you'll need to do one more quick thing to make your API behave nicely.
+
+When a client (such as a browser) makes a request to a website it provides an Accept header. This is a list telling the server which types of content the client understands, and which it would prefer to use. As your API only returns JSON you'll want to make sure that the client is happy to accept that JSON before you start sending it back. If the client doesn't like JSON you should return an error message.
+
+The Flask test client doesn't send an Accept header as default. As a first step you need to update the requests in your tests to send the correct Accept header. For example in test_get_empty_posts you need to change your request to look something like this:
+
+        response = self.client.get("/api/posts",
+            headers=[("Accept", "application/json")]
+        )
+Next you can write a test which sends an unsupported Accept header. Rather than getting a 200 OK response you should expect to see a 406 Not Acceptable, which tells the client that you cannot send it data in a format which it will accept.
+
+    def test_unsupported_accept_header(self):
+        response = self.client.get("/api/posts",
+            headers=[("Accept", "application/xml")]
+        )
+
+        self.assertEqual(response.status_code, 406)
+        self.assertEqual(response.mimetype, "application/json")
+
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["message"],
+                         "Request must accept application/json data")
+Notice how you check for an error message in the same format as you use in the post_get method.
+
+With your test written you can try to find a way to return the error when an unsupported Accept header is detected. One option would be to add an if statement to each endpoint checking the Accept header. This would work well, but you would have to write the same code for every endpoint, which would not adhere to the principle of DRY (Don't Repeat Yourself). A nicer alternative is to write a decorator which performs the same role.
+
+Try adding the following decorator to the posts/decorators.py file:
+
+def accept(mimetype):
+    def decorator(func):
+        """
+        Decorator which returns a 406 Not Acceptable if the client won't accept
+        a certain mimetype
+        """
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if mimetype in request.accept_mimetypes:
+                return func(*args, **kwargs)
+            message = "Request must accept {} data".format(mimetype)
+            data = json.dumps({"message": message})
+            return Response(data, 406, mimetype="application/json")
+        return wrapper
+    return decorator
+While there is quite a lot of syntax here the important part is pretty simple. Inside the wrapper function you check whether the supplied mimetype is in the Accept header. If it is, you continue with the route as usual (which is what return func(*args, **kwargs) does). If the mimetype is not in the header then you send a response with your JSON message and a 406 status code.
+
+Then all you have to do is add the decorator to your endpoints, for example:
+
+@app.route("/api/posts", methods=["GET"])
+@decorators.accept("application/json")
+def posts_get():
+    """ Get a list of posts """
+
+    ...
+Try running the tests one more time to make sure that you are correctly handling the Accept headers. If that all works then we've successfully written our first endpoints, tested that they work correctly, and made them behave nicely.
+
+In the next assignment you're going to introduce query strings to our API, allowing you to filter the lists of posts which you retrieve.
+
+Try It!
+
+Write tests and an endpoint for deleting a single post. The endpoint should be at /api/posts/<id>, and should only accept a DELETE request. Remember to test for and handle any errors which you think could arise with your endpoint.
+
+
+----------------------------------
+
+Unit 4 / Lesson 1 / Assignment 3
+
+
+Using Query Strings in an API
+
+ Estimated Time: 1-2 hours
+Using Query Strings in an API
+
+In this assignment you'll be extending the GET endpoint for posts to carry out simple queries. This code will allow you to find all of the posts with a title containing a particular string.
+
+In order to perform the query you'll use query strings. Query strings are a part of a URL designed to contain additional information which will be passed to the server in a request. For example, take a look at the following URL:
+
+http://example.com/message?from=Alice&to=Bob
+Here the query string is the part which says ?from=Alice&to=Bob. This is split into two pairs of keys and values: one saying that the message is from Alice, and one saying that the message should be sent to Bob.
+
+Test first
+Now that you know how query strings work, you can set up a test which will try to query the /api/posts endpoint to find posts which have a title containing the string "whistles". Try adding the following code to the TestAPI class in tests/api_tests.py.
+
+    def test_get_posts_with_title(self):
+        """ Filtering posts by title """
+        postA = models.Post(title="Post with bells", body="Just a test")
+        postB = models.Post(title="Post with whistles", body="Still a test")
+        postC = models.Post(title="Post with bells and whistles",
+                            body="Another test")
+
+        session.add_all([postA, postB, postC])
+        session.commit()
+
+        response = self.client.get("/api/posts?title_like=whistles",
+            headers=[("Accept", "application/json")]
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "application/json")
+
+        posts = json.loads(response.data.decode("ascii"))
+        self.assertEqual(len(posts), 2)
+
+        post = posts[0]
+        self.assertEqual(post["title"], "Post with whistles")
+        self.assertEqual(post["body"], "Still a test")
+
+        post = posts[1]
+        self.assertEqual(post["title"], "Post with bells and whistles")
+        self.assertEqual(post["body"], "Another test")
+This should all be pretty familiar from the previous assignment. First you add three posts to the database, two of which contain the word "whistles". Then you make a GET request to the endpoint, this time adding in your query string ?title_like=whistles. Then check the response status and mimetype and make sure that the correct two posts have been returned.
+
+Try running the test using nosetests tests. You should see that the endpoint returns a 200 status but is ignoring your query string and giving back all three posts.
+
+Making it pass
+Now try to change your endpoint to access the title_like value from the query string, and alter the database query so it will filter posts which don't match the string:
+
+@app.route("/api/posts", methods=["GET"])
+@decorators.accept("application/json")
+def posts_get():
+    """ Get a list of posts """
+    # Get the querystring arguments
+    title_like = request.args.get("title_like")
+
+    # Get and filter the posts from the database
+    posts = session.query(models.Post)
+    if title_like:
+        posts = posts.filter(models.Post.title.contains(title_like))
+    posts = posts.order_by(models.Post.id)
+
+    # Convert the posts to JSON and return a response
+    data = json.dumps([post.as_dictionary() for post in posts])
+    return Response(data, 200, mimetype="application/json")
+Here you're using the request.args.get function to retrieve the value from your query string. If there is no title_like key in the string this function will return None.
+
+You then construct our query in a couple of steps. First you construct a Query object without actually hitting the database. If the query string contained a title_like key you then add a filter, using the contains method to find titles which contain our string. Finally, the query is executed as you iterate over it in the list comprehension.
+
+Try running your tests again to make sure that your code correctly returns the filtered posts. With this in place you now have a more powerful retrieval API which allows you to perform simple searches on our posts.
+
+Try It!
+Try adding a query for body text to your API. Ideally you should be able to combine the two query types, so for example a request to /api/posts?title_like=whistles&body_like=bells should only return posts which have both whistles in the title and bells in the body.
+
+
+----------------------------------
+
+Unit 4 / Lesson 1 / Assignment 4
+
+
+Sending Data to an API with POST
+
+ Estimated Time: 2-3 hours
+In the previous two assignments you created an API to retrieve posts. While that is looking great, it will be much more useful when you can add posts using your API. In this assignment you'll add posts by sending POST requests to end endpoint.
+
+Test first
+To get started, write a quick test for adding a post. To add the post you are going to make a POST request to /api/posts. The request will contains the title and body of your post as JSON. Notice how the endpoint URL is the same as the one for getting a list of posts; the only difference is that you are sending a POST rather than a GET request.
+
+Your test needs to check that:
+
+The request to your endpoint is successful
+The post is getting added to the database as expected
+The endpoint is returning the correct JSON
+The endpoint is setting the correct Location header (more on this later)
+Add the following test to the TestAPI class in tests/api_tests.py.
+
+    def test_post_post(self):
+        """ Posting a new post """
+        data = {
+            "title": "Example Post",
+            "body": "Just a test"
+        }
+
+        response = self.client.post("/api/posts",
+            data=json.dumps(data),
+            content_type="application/json",
+            headers=[("Accept", "application/json")]
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.mimetype, "application/json")
+        self.assertEqual(urlparse(response.headers.get("Location")).path,
+                         "/api/posts/1")
+
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["id"], 1)
+        self.assertEqual(data["title"], "Example Post")
+        self.assertEqual(data["body"], "Just a test")
+
+        posts = session.query(models.Post).all()
+        self.assertEqual(len(posts), 1)
+
+        post = posts[0]
+        self.assertEqual(post.title, "Example Post")
+        self.assertEqual(post.body, "Just a test")
+While quite a lot of this is similar to the tests for the GET endpoints, there are a few new things to notice.
+
+When you make the post request you provide two new pieces of information:
+
+data: a JSON serialized representation of the post.
+content_type: a string describing the content type of your request.
+The response that you expect from the server is also more complex. Your first check on the response makes sure that you get a 201 Created status. This status is used to tell the client that the post has been created successfully.
+
+Your next check makes sure that a Location header has been set, and points to the endpoint which you can use to retrieve the new post. The Location header is used to point the client towards the location of the new resource. In order to access the header you use the response.headers.get method. You then use Python's urlparse module to remove the server address from the Location header. This allows you to compare the returned location with your expected endpoint address.
+
+The final checks on the response make sure that it contains JSON holding the correct representation of the post.
+
+To make sure that the item was added to the database correctly, you perform a simple query on the database. Then check that the details stored match up with what was in your input.
+
+Try running the test using nosetests tests. It should fail at the first assertion, as you haven't added the endpoint yet.
+
+Making it work
+With your test in place it's time to write the endpoint in posts/api.py.
+
+@app.route("/api/posts", methods=["POST"])
+@decorators.accept("application/json")
+def posts_post():
+    """ Add a new post """
+    data = request.json
+
+    # Add the post to the database
+    post = models.Post(title=data["title"], body=data["body"])
+    session.add(post)
+    session.commit()
+
+    # Return a 201 Created, containing the post as JSON and with the
+    # Location header set to the location of the post
+    data = json.dumps(post.as_dictionary())
+    headers = {"Location": url_for("post_get", id=post.id)}
+    return Response(data, 201, headers=headers,
+                    mimetype="application/json")
+Use the request.json dictionary to access the data which you passed in to the endpoint. This data is then used to create a new Post instance, which is added to the database. You then create and return the response as usual, this time adding in a headers dictionary containing our Location header. In order to find the correct location you use Flask's url_for function, which determines the URL for a specific endpoint.
+
+Try running the tests again. If everything is working correctly you should now be able to both add and retrieve a post using your API.
+
+Good behavior Pt 1. - Mimetypes
+Just like with your GET endpoints there are a couple of additional steps you can take to make your POST endpoint more robust and helpful to clients.
+
+Currently you use the accept decorator to ensure that the client can deal with the JSON that you return. But what if a client tries to send you data that you don't understand? At the moment your code will fail, so let's try to rectify that.
+
+First write a test which tries to send data of an incorrect type to your endpoint:
+
+    def test_unsupported_mimetype(self):
+        data = "<xml></xml>"
+        response = self.client.post("/api/posts",
+            data=json.dumps(data),
+            content_type="application/xml",
+            headers=[("Accept", "application/json")]
+        )
+
+        self.assertEqual(response.status_code, 415)
+        self.assertEqual(response.mimetype, "application/json")
+
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["message"],
+                         "Request must contain application/json data")
+When you send the XML data you expect to see a 415 Unsupported Media Type error, which tells the client that the data was in the wrong format. You also check that you return a JSON error message in the usual format.
+
+Try running the test. It should cause an error when the endpoint tries to access the non-existent JSON data. You can write a decorator to fix that. It will check whether the mimetype is set to application/json, and if not it will return an error.
+
+def require(mimetype):
+    def decorator(func):
+        """
+        Decorator which returns a 415 Unsupported Media Type if the client sends
+        something other than a certain mimetype
+        """
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if (request.mimetype ==  mimetype):
+                return func(*args, **kwargs)
+            message = "Request must contain {} data".format(mimetype)
+            data = json.dumps({"message": message})
+            return Response(data, 415, mimetype="application/json")
+        return wrapper
+    return decorator
+This should look pretty familiar; it is almost exactly the same as your accept decorator, with a slightly different condition.
+
+Try using this to decorate the post_post endpoint and then run the tests again. You should now be dealing with incorrect input formats in a well-behaved way.
+
+Good behavior Pt 2. - Validation
+You've seen how to handle clients sending the wrong type of data, but what if the data they are sending is valid JSON, but is in the wrong format. For example, what if rather than a string for the title the client is giving us a list?
+
+In order to handle these conditions gracefully you'll need to validate the data that the client sends. Fortunately there is an excellent module for validating JSON data called jsonschema.
+
+First, write a couple of tests checking that your endpoint returns an error if the client sends invalid data or data that's missing important information.
+
+    def test_invalid_data(self):
+        """ Posting a post with an invalid body """
+        data = {
+            "title": "Example Post",
+            "body": 32
+        }
+
+        response = self.client.post("/api/posts",
+            data=json.dumps(data),
+            content_type="application/json",
+            headers=[("Accept", "application/json")]
+        )
+
+        self.assertEqual(response.status_code, 422)
+
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["message"], "32 is not of type 'string'")
+
+    def test_missing_data(self):
+        """ Posting a post with a missing body """
+        data = {
+            "title": "Example Post",
+        }
+
+        response = self.client.post("/api/posts",
+            data=json.dumps(data),
+            content_type="application/json",
+            headers=[("Accept", "application/json")]
+        )
+
+        self.assertEqual(response.status_code, 422)
+
+        data = json.loads(response.data.decode("ascii"))
+        self.assertEqual(data["message"], "'body' is a required property")
+The tests check that the endpoint will return a helpful error message and a 422 Unprocessable Entity status. This tells the client that you couldn't correctly process the data provided.
+
+Now, you will use jsonschema to check the data that you're given, and make sure it complies with the format you're looking for. The jsonschema library uses a complete description of your expected object to check whether the data is valid. The description (known as the schema) is described using a Python dictionary. Try adding the following schema describing your post format to the top of the posts/api.py file:
+
+# JSON Schema describing the structure of a post
+post_schema = {
+    "properties": {
+        "title" : {"type" : "string"},
+        "body": {"type": "string"}
+    },
+    "required": ["title", "body"]
+}
+In your schema you say that you expect an object containing two properties: a string containing the title, and a string containing the body. You specify that both items are required for the JSON to be valid.
+
+Next you can change your post_post endpoint to validate the input data against your schema:
+
+@app.route("/api/posts", methods=["POST"])
+@decorators.accept("application/json")
+@decorators.require("application/json")
+def posts_post():
+    """ Add a new post """
+    data = request.json
+
+    # Check that the JSON supplied is valid
+    # If not you return a 422 Unprocessable Entity
+    try:
+        validate(data, post_schema)
+    except ValidationError as error:
+        data = {"message": error.message}
+        return Response(json.dumps(data), 422, mimetype="application/json")
+
+    # Add the post to the database
+    post = models.Post(title=data["title"], body=data["body"])
+    session.add(post)
+    session.commit()
+
+    # Return a 201 Created, containing the post as JSON and with the
+    # Location header set to the location of the post
+    data = json.dumps(post.as_dictionary())
+    headers = {"Location": url_for("post_get", id=post.id)}
+    return Response(data, 201, headers=headers,
+                    mimetype="application/json")
+You're trying to validate the data against your post schema. If this throws a ValidationError then you create an error message from the exception and return it with a 422 status. Otherwise carry on as usual and add the post to the database.
+
+Try to run your tests again. You should see that you now give descriptive error messages if the wrong types of data are sent to your API.
+
+With that in place you now have a complete, well-behaved API allowing you to add and retrieve posts. Next you will create some real single-page applications by building APIs.
+
+Try It!
+Try adding a new endpoint which receives a PUT request at /api/post/<id>. This endpoint should accept JSON in the same format as our POST method, and use it to edit the title and body of the specified post.
+
+
+
+
+
+
+
+
+
+
+
+

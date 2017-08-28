@@ -1,0 +1,815 @@
+Thinkful
+
+Unit 3 / Lesson 4
+
+
+Building Blogful with Flask
+
+ Estimated Time: 10-11 hours
+In this lesson, you'll get started building a practical application in Flask. You'll create a blog from scratch, and learn tons about web application development and architecture. You'll follow along as we get you started building Blogful, before you start implementing your own features from scratch.
+
+Next, you'll learn more advanced development techniques including using database migrations to manage your data structure for your application and how to build a user authentication system using Flask-Login.
+
+Finally, you'll work on your own to improve your blog with features that you spec out and define with the help of your mentor.
+
+Goals
+
+Understand how a web application is structured using MVC in practice
+Set up a Flask application from scratch
+Configure a Flask application for development
+Create the data models for a blog in your database using SQLAlchemy
+Create jinja templates for various blog views
+Process data from a form and persist new objects using this data
+Implement a user authentication system using sessions and Flask-Login
+Use decorators to quickly add functionality to your code
+Understand how database migrations simplify database management
+Create a database migration and run it to update your database
+Identify, spec out, and build new features for your Blogful platform.
+
+
+----------------------------------
+
+Unit 3 / Lesson 4 / Assignment 1
+
+
+Structuring a Flask project
+
+ Estimated Time: 1 hour
+In the next few assignments you are going to learn how to structure and build a larger project using Flask and SQLAlchemy by building a simple blogging engine.
+
+In this first assignment you'll set up the basic structure of the app and perform various configuration tasks. You will then use this structure to build up your code in the following assignments.
+
+First steps
+
+First, you'll set up your directory structure. Create a new folder called blog and create the following structure:
+
+blog                        Root directory
+├── blog                    Module directory
+│   ├── static              Static files directory
+│   │   └── css             Stylesheets directory
+│   │       └── main.css    Main stylesheet
+│   ├── templates           Templates directory
+│   ├── config.py           App configuration options
+│   ├── database.py         Database setup and SQLAlchemy models
+│   ├── filters.py          Custom Jinja filters
+│   ├── __init__.py         App setup and configuration
+│   └── views.py            Views
+├── env                     Virtual environment
+├── manage.py               App management file
+└── requirements.txt        Install requirements
+Next, follow a basic setup procedure:
+
+Move into the root directory - cd blog
+Set up the virtualenv - python3 -m venv env
+Activate the virtualenv - source env/bin/activate
+Record your dependencies - echo flask sqlalchemy flask-login flask-script flask-migrate mistune psycopg2|tr ' ' '\n' >>requirements.txt
+Install your dependencies - pip install -r requirements.txt
+Create a database - createdb blogful
+Now let's get to the point where you can fire up the development server. Add the following code to your __init__.py file.
+
+from flask import Flask
+
+app = Flask(__name__)
+
+from . import views
+from . import filters
+Here you import the Flask object and create your app in the usual way. After you've created the app you import the (currently non-existent) views and Jinja filters. Notice how these imports come after you create the app rather than at the top of the file as usual. This is because the views.py and filters.py files will both make use of the app object. This means that they need importing after the object has been created. Note the relative import notation; this is a short-hand for import blog.views and import blog.filters, and will import additional modules from the current package only.
+
+Next you need to call the app.run method to start your development server. You are going to do this in the manage.py file, which will contain a series of commands intended to help you out as you develop the application. You could specify a command-line interface for this file using the argparse module, but in order to speed this work up a bit you are going to introduce a new module called Flask-Script.
+
+Flask-Script is designed to allow you to easily specify tasks to help you manage your application. So let's see how you define a task. In the manage.py file add the following code:
+
+import os
+from flask_script import Manager
+
+from blog import app
+
+manager = Manager(app)
+
+@manager.command
+def run():
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
+
+if __name__ == "__main__":
+    manager.run()
+First you import the Manager object, and create an instance of it. Then you add a command to the manager by decorating a function using the manager.command decorator. The name of the function corresponds with the name of the argument which you give the manage script. For example to call the run function you'll say python manage.py run.
+
+Inside the run function you try to retrieve a port number from the environment, falling back to port 8080 if it is unavailable. You then run the development server, telling it to listen on that port. A number of hosts use the PORT environment variable to tell the app which port it should be listening on, so it is generally good practice to comply with this.
+
+Finally in the main block you run the manager. Try using this script to launch the development server by saying python manage.py run. You should see the server launched as usual listening on port 8080.
+
+Configuring your app
+
+Now that you have your app running take a few more steps so that you can manage the configuration of the app. In the config.py file add the following class:
+
+import os
+class DevelopmentConfig(object):
+    SQLALCHEMY_DATABASE_URI = "postgresql://ubuntu:thinkful@localhost:5432/blogful"
+    DEBUG = True
+You use this class to contain the configuration variables which control the Flask app. You tell Flask to use its debug mode to help you track down any errors in your application, and set the location of your database. Note that you might find that PostgreSQL isn't running; if you see errors referring to port 5432 and "connection refused", execute sudo service postgresql start. Section 2.1.3 has further information about this, if you aren't sure.
+
+Next, load the configuration in the __init__.py file:
+
+import os
+
+from flask import Flask
+
+app = Flask(__name__)
+config_path = os.environ.get("CONFIG_PATH", "blog.config.DevelopmentConfig")
+app.config.from_object(config_path)
+
+from . import views
+from . import filters
+Again, you're trying to get an environment variable which will set the path to your configuration object. If the variable is not set then you default to your development configuration. This provides a way to switch between configurations easily in different situations; for example in the next lesson you'll use this to switch over to a different configuration for testing the application. You then use the app.config.from_object method to configure the app using the object specified.
+
+Setting up the database
+
+Now that the app is configured let's look at setting up a connection to the database where you'll be storing blog entries. Add the following setup code to database.py.
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+from . import app
+
+engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+Base = declarative_base()
+Session = sessionmaker(bind=engine)
+session = Session()
+This should look very familiar; it's the basic boilerplate code for working with a database using SQLAlchemy. You create the engine which will talk to the database at the database URI which you specified in the config. You then create a declarative base, and start a new session.
+
+That's pretty much everything which you need for the project configured. In the next assignment you'll use the structure you've built here to start to construct the blog engine.
+
+How do you add a command to a Flask-Script Manager object?
+You write a function which is decorated with the @manager.command decorator.
+What does the Flask.config.from_object method do? When would we want to change the argument which we pass into the method?
+It takes a string containing the path to a file, dictionary or class, and uses the variables in the corresponding object to populate the config object. You can change the argument to use different configurations for different environments, for example you may have a configuration for development, one for testing and one for production.
+Why is it useful for web apps to listen on a port specified by an environment variable?
+It allows us to deploy on servers which don't have a fixed outgoing port or deploy on multiple servers each using a different outgoing port without having to change our code.
+
+
+----------------------------------
+
+Unit 3 / Lesson 4 / Assignment 2
+
+
+Building a blog
+
+ Estimated Time: 2-3 hours
+In this assignment you will be extending your base from the previous assignment to actually create the blog engine. By the end of the assignment you should be able to add and view blog entries.
+
+Creating the model
+
+The first step is to create a SQLAlchemy model which you'll use to store and retrieve blog entries. In database.py add the following code:
+
+import datetime
+
+from sqlalchemy import Column, Integer, String, Text, DateTime
+
+class Entry(Base):
+    __tablename__ = "entries"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String(1024))
+    content = Column(Text)
+    datetime = Column(DateTime, default=datetime.datetime.now)
+
+Base.metadata.create_all(engine)
+This should all be familiar from Unit 3. You create a new class which inherits from the declarative base object. Give the model a table name, and add a series of columns. These store a primary key id, the title of the entry, the entry content, and the date and time at which the entry was created. Then use the Base.metadata.create_all function to construct the table in the database.
+
+Adding some example data
+
+It would be nice to have a simple way to add some example entries to the database so you could test the application easily. Add a task to your manager which will generate a series of entries. Add the following code to the manage.py file:
+
+from blog.database import session, Entry
+
+@manager.command
+def seed():
+    content = """Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."""
+
+    for i in range(25):
+        entry = Entry(
+            title="Test Entry #{}".format(i),
+            content=content
+        )
+        session.add(entry)
+    session.commit()
+Here you create a command called seed which will add a series of entries to the database. In the seed function you create a string of dummy text for the entry content. You then run a loop 25 times. In the loop you create a new entry and add it to the session. Finally you use the session.commit function to synchronize our changes with the database.
+
+Run the command using python manage.py seed. You should now have a series of entries in the database which you can use to test our future work.
+
+Displaying the entries
+
+Now that you have some entries in the database you can start to build the views and templates to allow you to display them.
+
+First, set up a simple view in views.py designed so that you can see all of the entries:
+
+from flask import render_template
+
+from . import app
+from .database import session, Entry
+
+@app.route("/")
+def entries():
+    entries = session.query(Entry)
+    entries = entries.order_by(Entry.datetime.desc())
+    entries = entries.all()
+    return render_template("entries.html",
+        entries=entries
+    )
+Here you construct a query of Entry objects. You order the entries by the datetime column, getting the most recent ones first. Then you use the entries.all method to retrieve all of the results. Finally you render a template called entries.html, passing in the list of entries.
+
+Now you have the view sorted let's set up the templates. First, you'll make a base template which uses Bootstrap to provide some basic styling and UI components. In the templates folder create a new file called base.html:
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>Blogful</title>
+
+        <!-- CSS -->
+        <!-- Bootstrap -->
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+        <!-- Blog -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+        <!-- JavaScript -->
+        <!-- jQuery -->
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <!-- Bootstrap -->
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    </head>
+
+    <body>
+        <div class="navbar navbar-inverse navbar-static-top" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="{{ url_for('entries') }}">Blogful</a>
+                </div>
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </body>
+</html>
+This is a fairly standard Bootstrap template. You'll have a static navbar at the top, and a content block below that. You can see that there's a css file called main.css which is served from the static/css directory. Let's quickly add in a css rule to this file which will add some basic styling to our entries:
+
+div.metadata {
+    margin-top: 20px;
+    font-size: 1.5em;
+}
+Next you'll need to render the entries. Because there are a number of places where you might want to render an entry you will separate this code into a Jinja macro. In a file called macros.html in the templates directory, add the following code:
+
+{% macro render_entry(entry) %}
+<div class="row">
+    <div class="col-md-2 text-right metadata">
+        <ul class="list-unstyled">
+            <li>
+                {{ entry.datetime | dateformat("%d/%m/%y") }}
+            </li>
+        </ul>
+    </div>
+    <div class="col-md-10">
+        <h1>
+            {{ entry.title }}
+        </h1>
+        {{ entry.content | markdown }}
+    </div>
+</div>
+{% endmacro %}
+Here you declare a macro called render_entry which takes an entry as a single argument. When this is called, you render a narrow metadata column containing the entry date, and a wider body column which contains the entry title and content.
+
+There are a couple of things to note here. You're using the markdown filter on the entry content. This allows you to use the Markdown syntax, making it simpler to write well-formatted blog entries. You use the dateformat filter to display the datetime in dd/mm/yy format. Jinja doesn't include these filters by default, so you need to add this to the filters.py file:
+
+from . import app
+from flask import Markup
+import mistune as md
+
+@app.template_filter()
+def markdown(text):
+    return Markup(md.markdown(text,escape=True))
+
+@app.template_filter()
+def dateformat(date, format):
+    if not date:
+        return None
+    return date.strftime(format)
+Here you're creating a function which takes two arguments: the date which is piped in from the template, and a format string which you provide as an argument. Check to make sure that you have a date object, then you use the strftime method to format the date correctly.
+
+The final step towards viewing the entries is to actually add the entries.html template:
+
+{% import "macros.html" as macros %}
+{% extends "base.html" %}
+{% block content %}
+
+{% for entry in entries %}
+{{ macros.render_entry(entry) }}
+{% endfor %}
+
+{% endblock %}
+First you import the macros.html file. Then specify that the template should inherit from base.html. Finally in the content block you loop through the entries, rendering each one using the render_entry macro.
+
+Try running your app using python manage.py run, then visit the site. You should see all 25 of your test entries listed, starting with the most recent.
+
+Once you've confirmed that your new feature works correctly, you can merge your changes back into master.
+
+Adding pagination
+
+Although the view works fine for 25 entries, what about if you have thousands? It is unlikely that anyone will need to see all of these entries at once, and it will make rendering far slower. So try modifying the view slightly to introduce pagination.
+
+PAGINATE_BY = 10
+
+@app.route("/")
+@app.route("/page/<int:page>")
+def entries(page=1):
+    # Zero-indexed page
+    page_index = page - 1
+
+    count = session.query(Entry).count()
+
+    start = page_index * PAGINATE_BY
+    end = start + PAGINATE_BY
+
+    total_pages = (count - 1) // PAGINATE_BY + 1
+    has_next = page_index < total_pages - 1
+    has_prev = page_index > 0
+
+    entries = session.query(Entry)
+    entries = entries.order_by(Entry.datetime.desc())
+    entries = entries[start:end]
+
+    return render_template("entries.html",
+        entries=entries,
+        has_next=has_next,
+        has_prev=has_prev,
+        page=page,
+        total_pages=total_pages
+    )
+Here you create a new route, /page/<int:page> designed to take you to a specific page of content. You add an argument to your route for the page number, page, and a module constant PAGINATE_BY, which indicates how many items should be on each page. (Python doesn't enforce anything about these, but by convention, an ALL_UPPERCASE_NAME is a constant.) You then use the count method of a query object to find out how many entries there are in total. You can use all of this data to calculate a number of pieces of information about the pagination:
+
+start - The index of the first item that you should see
+end - The index of the last item that you should see
+total_pages - The total number of pages of content
+has_next - Whether there is a page after the current one
+has_prev - Whether there is a page before the current one
+Then change the query so that rather than finding all entries it slices the query so you only find the entries between the start and end indices. Finally you pass all of this information into the template.
+
+Try visiting your app again. You should the most recent 10 items only. If you then visit /page/2 you should see the next 10 items. But typing in the URL is not a particularly nice user interface. Adjust your entries.html template to display some buttons which will direct you to the next and previous pages:
+
+{% import "macros.html" as macros %}
+{% extends "base.html" %}
+{% block content %}
+
+{% for entry in entries %}
+{{ macros.render_entry(entry) }}
+{% endfor %}
+
+<ul class="pager">
+    {% if has_next %}
+    <li class="previous" >
+    <a href="{{ url_for('entries', page=page + 1) }}">&larr; Older</a>
+    </li>
+    {% endif %}
+    {% if has_prev %}
+    <li class="next">
+    <a href="{{ url_for('entries', page=page - 1) }}">&rarr; Newer</a>
+    </li>
+    {% endif %}
+</ul>
+
+{% endblock %}
+If the has_next variable is true you'll add a link to the next page using Flask's url_for function to generate the URL for the route. Similarly if the has_prev variable is true you'll render a link to the previous page.
+
+Adding blog entries
+
+Next you can start to think about how to add new entries without needing to use the command line. The most common way to get user input in web apps is through HTML forms. So let's create a form in a new template called add_entry.html:
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1>
+    Add Entry
+</h1>
+
+<form role="form" method="POST">
+    <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" class="form-control" id="title" name="title" placeholder="Entry title" required>
+    </div>
+    <div class="form-group">
+        <label for="content">Content</label>
+        <textarea class="form-control" id="content" name="content" placeholder="Entry content" rows="20" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-default">Submit</button>
+</form>
+{% endblock %}
+There are a couple of things to notice here. The form has the method attribute set to POST. This means that when you submit the form it will send the data via a POST request. As the form element does not have an action attribute the request will be sent to the same URL as you used to GET the form.
+
+Inside the form you have two fields, one for the title and one for the content. Notice how both of these fields have the name attribute set. You'll use this name to access the contents of the fields. Finally you have a submit button which you will use to submit the form.
+
+Now, create a view in views.py so that you can display the form:
+
+@app.route("/entry/add", methods=["GET"])
+def add_entry_get():
+    return render_template("add_entry.html")
+Notice how you use the methods=["GET"] parameter in the route decorator. This specifies that the route will only be used for GET requests to the page; you will have to add a new view for the POST request which takes place when you submit the form.
+
+Try visiting the /entry/add page of your app. You should see the form for adding an entry. If you try to submit the form you should see an error saying that the route does not accept POST requests. Add a new route which will take your form data and create the new entry.
+
+from flask import request, redirect, url_for
+
+@app.route("/entry/add", methods=["POST"])
+def add_entry_post():
+    entry = Entry(
+        title=request.form["title"],
+        content=request.form["content"],
+    )
+    session.add(entry)
+    session.commit()
+    return redirect(url_for("entries"))
+Here you create an similar route to your add_entry_get view, except this one only accepts POST requests. Inside the function you create a new Entry object. You use Flask's request.form dictionary to access the data submitted with your form and assign it to the correct fields in the entry.
+
+Next you add the entry to your session, and commit it to the database. Finally you use Flask's redirect function to send the user back to the front page once their entry has been created.
+
+Now try visiting the /entry/add page again and submitting a new entry. You should see that the entry is added correctly and is now at the top of your page of most recent entries.
+
+How would you generate a link tag which points to a static stylesheet in a Jinja template?
+You can use the url_for function to generate the href tag. For example <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"> would link to the file static/css/main.css.
+How do we access data which a user has submitted through a form?
+You can access the data using the request.form dictionary.
+What does the Flask.template_filter method do?
+It wraps a function to add a custom filter to Flask's Jinja environment. It is most commonly used as a decorator.
+What is pagination? What are some advantages and disadvantages of using a pagination scheme?
+Pagination is the splitting of list of items into multiple pages of content. It allows data to be retrieved in manageable chunks, speeding up page loading times and preventing the user from being overwhelmed with data. In some situations this may lead to a less seamless user experience, with the user constantly having to click between multiple pages of content.
+
+
+----------------------------------
+
+Unit 3 / Lesson 4 / Assignment 3
+
+
+Extending the blog
+
+ Estimated Time: 2-3 hours
+In the previous assignment you got the bulk of the blogging engine up and running. In this assignment you will be adding some new views and templates to the blog to extend its functionality.
+
+Try to expand your code to add the following features:
+
+/entry/<id>
+Allows you to view a single entry
+Should be accessed by clicking on the title of an entry
+Should use the render_entry macro to display the entry
+/entry/<id>/edit
+Allows you to edit an entry
+Should be accessed via a link in the metadata div
+Should display a similar form to the add_entry view
+The form should be prepopulated with the existing entry data
+/entry/<id>/delete
+Allows you to delete an entry
+Should be accessed via a link in the metadata div
+Should display buttons asking you to confirm or cancel the deletion
+/?limit=20 and /page/2?limit=20
+Allows you to customize the number of entries per page
+Should be accessed via a link or drop-down "Entries per page:"
+Use request.args.get to find out what was entered
+Be sure to cope with the ridiculous cases (eg limit=0, limit=99999999, limit=3.14, limit=spam), eg by reverting to the default limit
+When you are done post your code up to GitHub and discuss it with your mentor.
+
+
+----------------------------------
+
+Unit 3 / Lesson 4 / Assignment 4
+
+
+Authentication using Flask-Login
+
+ Estimated Time: 2-3 hours
+In the previous three assignments you built a blogging engine. But there is one obvious problem that remains: anyone can edit your blog. In order to stop this you need to add a system which only allows users to edit your blog when they are authenticated.
+
+In this assignment you will be building a login system based on the Flask-Login module which will allow you to limit the people who are able to make changes to the blog.
+
+Setting a secret key
+
+The first step you need to take is to set up a secret key in config.py:
+
+class DevelopmentConfig(object):
+    SQLALCHEMY_DATABASE_URI = "postgresql://ubuntu:thinkful@localhost:5432/blogful"
+    DEBUG = True
+    SECRET_KEY = os.environ.get("BLOGFUL_SECRET_KEY", os.urandom(12))
+The SECRET_KEY is used to cryptographically secure your application's sessions. However, it's not a good idea to store your application's secret key inside the application configuration itself. Therefore, we use os.environ.get to obtain the secret key from an environment variable, falling back on a key generated at random on startup.
+
+An important part of your development process should be to export any needed environment variables. In your terminal prompt, enter the following:
+
+export BLOGFUL_SECRET_KEY="your_secret_key_here"
+This sets an environment variable called BLOGFUL_SECRET_KEY. If you don't do this, the random key will be used, which means the key will change every time the server restarts - which, in turn, means that all your users' sessions will be wiped out. Also, if you have multiple server processes (common on heavily-used web sites), they'll all have different keys, so your users will find themselves getting logged out randomly. For a production web site, this is unacceptable, and setting the environment variable will be critical; for now, it's not as important, but we do it as best-practice.
+
+Adding a user
+
+The next stage of the login system is to create a user model. In database.py add the following model:
+
+from flask_login import UserMixin
+
+class User(Base, UserMixin):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128))
+    email = Column(String(128), unique=True)
+    password = Column(String(128))
+Here you create the User model which inherits from the declarative base. It also inherits from Flask-Login's UserMixin class, which adds a series of default methods. Flask-Login relies on these default methods to make authentication work. The model has four columns: an integer id, a name, a unique email address which you will use to identify the user, and a password.
+
+Now that you have the model you want to add a user to the database which you can use to test that the login system is working. Add a command to the manage.py script which will add a new user:
+
+from getpass import getpass
+
+from werkzeug.security import generate_password_hash
+
+from blog.database import User
+
+@manager.command
+def adduser():
+    name = input("Name: ")
+    email = input("Email: ")
+    if session.query(User).filter_by(email=email).first():
+        print("User with that email address already exists")
+        return
+
+    password = ""
+    while len(password) < 8 or password != password_2:
+        password = getpass("Password: ")
+        password_2 = getpass("Re-enter password: ")
+    user = User(name=name, email=email,
+                password=generate_password_hash(password))
+    session.add(user)
+    session.commit()
+Here you ask the user for their name, email address, and their password twice. You check to make sure that the user is not already stored in the database, and you make sure that the passwords match. Then you create the user object and add it to the database.
+
+Notice how you use the generate_password_hash function from Werkzeug in order to hash the password. Hashing is a process which converts the plain text password to a string of characters, for example the string baseball is converted to the hash a2c901c8c6dea98958c219f6f2d038c44dc5d362 using the SHA1 hashing algorithm.
+
+For passwords you'll use one-way hashes. This means that the hashing process only works in one direction; you can always obtain the string a2c901... from the string baseball, but it is practically impossible to obtain the string baseball if you only know the hash a2c901... The benefit of hashing passwords is that if a malicious user obtains access to your database then they only know the user's hashes, and cannot obtain the passwords easily. Additionally, these are salted hashes, which means that some additional random data is mixed in with the password; generating several hashes for the same password will generate several distinct hashes. The verification step uses the salt and a provided password to ascertain whether or not the password is correct, without revealing anything about a wrong password.
+
+Setting up the login system
+
+Now that you have a user added, you can start to set up the login system. First of all you need to perform a little bit of configuration. In a new file called login.py add the following code:
+
+from flask_login import LoginManager
+
+from . import app
+from .database import session, User
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+login_manager.login_view = "login_get"
+login_manager.login_message_category = "danger"
+
+@login_manager.user_loader
+def load_user(id):
+    return session.query(User).get(int(id))
+Here you do a couple of things. First you create an instance of the LoginManager class from Flask-Login, and initialize it. Next you set a couple of attributes of the object. The login_view is the name of the view which an unauthorized user will be redirected to when they try to access a protected resource. The login_message_category is a category used to classify any error messages from Flask-Login. You will use this in conjunction with Bootstrap's alerts system to give the user information about the login process.
+
+Finally you create a function which tells Flask-Login how to access an object representing a user via their ID.
+
+The only thing left to do now is to incorporate all of this new code into the application. In __init__.py, add the following line to the bottom:
+
+from . import login
+Next, create the login_get view which we referred to earlier. In views.py add this view:
+
+@app.route("/login", methods=["GET"])
+def login_get():
+    return render_template("login.html")
+Then, create the login.html template which accompanies it:
+
+{% extends "base.html" %}
+{% block content %}
+<form role="form" method="POST">
+    <div class="form-group">
+        <label for="email">Email address</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="Email address" required>
+    </div>
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+    </div>
+    <button type="submit" class="btn btn-default">Submit</button>
+</form>
+{% endblock %}
+Try visiting the /login page. You should see the login form, and when you submit you should see that there is no POST route for /login. Now, add that route so you can authenticate yourself:
+
+from flask import flash
+from flask_login import login_user
+from werkzeug.security import check_password_hash
+from .database import User
+
+@app.route("/login", methods=["POST"])
+def login_post():
+    email = request.form["email"]
+    password = request.form["password"]
+    user = session.query(User).filter_by(email=email).first()
+    if not user or not check_password_hash(user.password, password):
+        flash("Incorrect username or password", "danger")
+        return redirect(url_for("login_get"))
+
+    login_user(user)
+    return redirect(request.args.get('next') or url_for("entries"))
+Here you read the email address and password which the user entered from the request.form dictionary. Next you query to find the user object with the matching email address. You check that the user exists, and use Werkzeug's check_password_hash function to compare the password the user entered with the hash stored in the database.
+
+If the username or password is incorrect you use Flask's flash function to store a message which you can use when you render the next page. In the next section you will look at how to display these messages to the user. You then redirect the user back to the login page.
+
+If the username and password are correct then you call Flask-Login's login_user function. This sends a cookie (a small chunk of data) to the user's browser which is used to identify the user. When the user then tries to access a protected resource, Flask-Login will make sure that they have the cookie set and are allowed to access the resource.
+
+Finally when the user is logged in you redirect the user. Normally you redirect the user to the entries page. However if there is a next parameter in the URL's query string then you redirect to that address. Flask-Login uses this so that the user can access the intended resource after logging in.
+
+For example imagine that the /entry/add resource requires us to login. When you visit /entry/add Flask-Login will redirect you to /login?next=/entry/add. You then log in, and the view will read the next parameter and send us on to /entry/add, complying with the initial request.
+
+Try visiting the /login page again, and log in with an incorrect password. You should be sent back to the login page. Now try entering the correct password. You should be logged in and redirected to the entries page.
+
+Handling error messages
+
+In the login_user view you used the flash function to send a message to the user if they entered the wrong username or password. So now let's add some code to the base template which will show these messages. In base.html add the following code below the navbar:
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }}">
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+Here you call the get_flashed_messages function, telling it to also give categories with the messages. The categories allow us to classify the severity of messages; you might remember that earlier you told Flask-Login to give you messages with the category set to danger. You then loop through the messages, creating a new alert for each one.
+
+Try logging in to the site again using incorrect information. You should see the flashed message as an alert at the top of the page.
+
+Protecting resources
+
+The final stage of the login system is to actually protect the resources which require authentication. This is done using the login_required decorator from Flask-Login. So to prevent unauthorized users from adding entries you can edit the views to include the decorator:
+
+from flask_login import login_required
+
+@app.route("/entry/add", methods=["GET"])
+@login_required
+def add_entry_get():
+    return render_template("add_entry.html")
+
+@app.route("/entry/add", methods=["POST"])
+@login_required
+def add_entry_post():
+    entry = Entry(
+        title=request.form["title"],
+        content=request.form["content"],
+    )
+    session.add(entry)
+    session.commit()
+    return redirect(url_for("entries"))
+Notice how you decorate both the GET and the POST views to prevent access to the form, and to stop a user from manually constructing the form data and sending it to the POST endpoint.
+
+Try visiting the /entry/add page whilst not logged in. You should find that you are redirected to the login page. Then when you log in you should be redirected to the add entry form, and be able to post content. Your login system is complete.
+
+What does the UserMixin class from Flask-Login contain? How do we use it?
+The UserMixin class contains a series of methods which Flask-Login uses to check whether a user should be authenticated. Generally you inherit from it to add these methods to a user class.
+What do we mean when we talk about creating a one-way hash?
+A hash is a value which is generated from a input using a hashing algorithm. Hashing an input should always give the same resulting value. One-way hashes have the property that whilst it is simple to generate the hash from the input, it is practically impossible to recreate the input from the hash.
+How can you use Werkzeug to check whether a correct password has been entered when using password hashing?
+By calling check_password_hash(hashed_password, user_password), where hashed_password is a stored password hash, and user_password is the password enterred by the user.
+What is Flask-Login's user_loader decorator used for?
+It specifies a function which will return the user object for a corresponding user ID.
+What role do cookies play in Flask-Login?
+They store data which is used to identify the user as the navigate through the site.
+What does the flash function do? How do we work with it within a template?
+The flash function stores a message which we can access when rendering later pages. We can use the get_flashed_messages function in the template to access the list of messages.
+How do we make a view only accessible to a logged in user?
+Decorate the view function with the @login_required decorator.
+
+
+----------------------------------
+
+Unit 3 / Lesson 4 / Assignment 5
+
+
+Managing database migrations using Flask-Migrate
+
+ Estimated Time: 1-2 hours
+In this assignment you're going to add one small new feature to our blog: the ability to link an entry with its author. In order to do this you are going to create a relationship between the User object and the Entry object.
+
+This sounds fairly straightforward right? You add a foreign key to the Entry, a relationship to the User and you're good to go. Well, not quite. Remember that you already have a load of information stored in the database which you don't want to lose by recreating the entire schema. So how do you transition between the old database models and the new one?
+
+The answer is by using migrations. Migrations allow you to set up a series of scripts which allow us to easily move between different database schemas, adding and removing columns as necessary. SQLAlchemy has a migration tool called Alembic which you are going to use via Flask-Migrate, a thin wrapper which integrates nicely with our management script.
+
+Initializing migrations
+
+The first step is to add the migration management commands to your manage.py script:
+
+from flask_migrate import Migrate, MigrateCommand
+from blog.database import Base
+
+class DB(object):
+    def __init__(self, metadata):
+        self.metadata = metadata
+
+migrate = Migrate(app, DB(Base.metadata))
+manager.add_command('db', MigrateCommand)
+Here you create a new class called DB which is designed to hold your metadata object. Alembic uses the metadata to work out what the changes to the database schema should be. You then create an instance of Flask-Migrate's Migrate class, passing in the app and an instance of the DB class. Finally you use the add_command to add all of the commands held in the Migrate class to the management script.
+
+Now try using your script to initialize the migrations. At the terminal, run python manage.py db init. This will create a folder called migrations which will store the migration scripts and the configuration for Alembic. Note that alembic will ask you to edit some configuration settings. Flask-Migrate takes care of this automatically, so you can safely ignore this message.
+
+Changing the models
+
+Now let's see how to run a migration on our database. First make the changes to the models:
+
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
+
+class User(Base, UserMixin):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(128))
+    email = Column(String(128), unique=True)
+    password = Column(String(128))
+    entries = relationship("Entry", backref="author")
+
+class Entry(Base):
+    __tablename__ = "entries"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String(1024))
+    content = Column(Text)
+    datetime = Column(DateTime, default=datetime.datetime.now)
+    author_id = Column(Integer, ForeignKey('users.id'))
+Here you've added a one-to-many relationship between the User model and the Entry model. Now let's see how to use migrations to reflect this change in our database.
+
+First you need to create a migration script. Run python manage.py db migrate from the command line. You should see that a new file has been created in the migrations/versions folder. This will contain two functions, one for upgrading the database and one for downgrading it. The upgrade function should contain a line which adds the foreign key to the entries table, and the downgrade function should remove the foreign key.
+
+In this case the changes to the database have been automatically calculated by Alembic. The system for detecting changes is not perfect however, and occasionally you may find that you need to modify the migration script before you apply the changes.
+
+Run the migration to actually apply the changes to the database by saying python manage.py db upgrade. This will run the upgrade function, adding the column to the table. Now you should be able to update the views and templates to use the author attribute of the Entry model. In views.py you can update the add_entry_post function to assign the logged in user as the author of an entry:
+
+from flask_login import current_user
+
+@app.route("/entry/add", methods=["POST"])
+@login_required
+def add_entry_post():
+    entry = Entry(
+        title=request.form["title"],
+        content=request.form["content"],
+        author=current_user
+    )
+    session.add(entry)
+    session.commit()
+    return redirect(url_for("entries"))
+Here you use the current_user variable from Flask-Login to set the author attribute when you create the entry. You can then add {{ entry.author.name }} to the metadata div in your render_entry macro in templates/macros.html.
+
+Now try adding an entry then viewing it. You should see that your name is now displayed as author of the entry.
+
+At this point it is simple to continue working with migrations. Each time you make changes to the database you should run python manage.py db migrate to generate a migration script. If the script looks correct then python manage.py db upgrade will apply the changes. If you need to roll back changes at any point then python manage.py downgrade will reverse a migration. And that's all there is to managing a changing database schema.
+
+Why are migrations useful?
+They allow us to apply changes to a database schema in a structured way. The migrations can be applied across environments, so you could run them on your development server, then run them on your production environment when they have been fully tested.
+What is the difference between Flask-Migrate's migrate and upgrade commands?
+migrate only generates the migration script – it does not make any changes to the database. upgrade applies the most recent migration to the database.
+How would you change the actions which were due to take place in a migration?
+You can manually add or remove actions from the migration script contained in migrations/versions.
+How would you roll back a database to an earlier migration?
+The downgrade command will run through the downgrade functions to return the database to an earlier state.
+How do we access an object representing the currently logged in user?
+The user can be accessed through the current_user variable.
+
+
+----------------------------------
+
+Unit 3 / Lesson 4 / Assignment 6
+
+
+Finishing touches
+
+ Estimated Time: 1-2 hours
+In this assignment you will be working on your own to add a few finishing touches to the blog project. The tasks are going to be fairly loosely defined, so you are going to have to think about how to organize your code, and where each element fits in our codebase. If you are struggling to get started try splitting the tasks into a series of smaller steps, and discussing them with your mentor.
+
+To finish up the blog you should:
+
+Improve the user interface. At the moment you have to manually type in an address to login and add entries. These actions should be easily discoverable. Try to think about the difference between what a logged in user and a non-logged in user should see.
+Add a function which allows a user to logout. The flask_login.logout_user() function should help you here.
+Secure the views which you added in assignment 3. Think about which users should have access to which sections. For example, should a user be able to edit entries which they did not author?
+
+
+
+
+
+
